@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import render_template, flash, redirect, url_for, request
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm
 from app.models import User
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
@@ -47,6 +47,19 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@login_required
+@app.route('/add_azs', methods=['GET', 'POST'])
+def add_azs():
+    form = AddAzsForm()
+    if form.validate_on_submit():
+        azs = AZS(=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Congratulations, you are now registered!')
+        return redirect(url_for('login'))
+    return render_template('register.html', title='Register', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

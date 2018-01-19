@@ -15,6 +15,18 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
 
+class AddAzsForm(FlaskForm):
+    sixdign = StringField('SixDigitNumber', validators=[DataRequired()])
+    ru = StringField('RU', validators=[DataRequired()])
+    region = StringField('Region', validators=[DataRequired()])
+    manager = StringField('Managed by', validators=[DataRequired()])
+    num = StringField('Number', validators=[DataRequired()])
+    hostname = StringField('Hostname', validators=[DataRequired()])
+    dzo = StringField('DZO', validators=[DataRequired()])
+    azs_type = StringField('Type', validators=[DataRequired()])
+    active = BooleanField('Active')
+    submit = SubmitField('Add AZS')
+
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
