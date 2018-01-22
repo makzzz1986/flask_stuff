@@ -45,7 +45,7 @@ class Comment(db.Model):
 class Divisions(db.Model):
     __tablename__ = 'divisions'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(40))
+    div_name = db.Column(db.String(40))
     user = db.relationship('User', backref='otdel', lazy='dynamic')
 
 class Rank(db.Model):
@@ -58,7 +58,7 @@ class AZS(db.Model):
     __tablename__ = 'azs'
     id = db.Column(db.Integer, primary_key=True)
     sixdign = db.Column(db.Integer, index=True, unique=True)
-    # ru = db.Column(db.Integer, db.ForeignKey('ru.id'))
+    ru = db.Column(db.Integer, db.ForeignKey('ru.id'))
     # region_mgmt = db.Column(db.Integer, db.ForeignKey('region_mgmt.id'))
     num = db.Column(db.Integer, unique=True)
     hostname = db.Column(db.String(30))
@@ -73,12 +73,12 @@ class AZS(db.Model):
 #    hardware = db.relationship('Hardware', uselist=False, back_populates='azs')
     # ip = db.relationship('Ip', uselist=False, back_populates='azs')
     
-# class RU(db.Model):
-#     __tablename__ = 'ru'
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(20))
-#     geo = db.Column(db.String(60))
-#     azs = db.relationship('AZS', backref='RU', lazy='dynamic')
+class RU(db.Model):
+    __tablename__ = 'ru'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+    geo = db.Column(db.String(60))
+    azs = db.relationship('AZS', backref='RU', lazy='dynamic')
 
 # class Region_mgmt(db.Model):
 #     __tablename__ = 'region_mgmt'

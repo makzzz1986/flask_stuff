@@ -17,23 +17,16 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class AddAzsForm(FlaskForm):
-    sixdign = IntegerField('SixDigitNumber', validators=[DataRequired(), NumberRange(min=1, max=999999)])
-    # ru = IntegerField('RU', validators=[DataRequired(), NumberRange(min=1, max=999)])
+    sixdign = IntegerField('Код', validators=[DataRequired(), NumberRange(min=1, max=999999)])
     # managed = IntegerField('Managed by', validators=[DataRequired()])
-    num = IntegerField('Number', validators=[DataRequired(), NumberRange(min=1, max=999)])
-    address = StringField('Address', validators=[DataRequired()])
-    hostname = StringField('Hostname', validators=[DataRequired()])
+    num = IntegerField('№', validators=[DataRequired(), NumberRange(min=1, max=999)])
+    address = StringField('Адрес', validators=[DataRequired()])
+    hostname = StringField('Хостнейм', validators=[DataRequired()])
     # dzo = StringField('DZO', validators=[DataRequired()])
     # azs_type = StringField('Type', validators=[DataRequired()])
-    # user = SelectField('User', coerce=int)
-    user = QuerySelectField(query_factory=lambda:User.query.all(), get_label='username')
-    active = BooleanField('Active')
-    submit = SubmitField('Add AZS')
-
-    # def edit_user():
-    #     user = User.query.all()
-    #     print('>>>', user)
-    #     form.user.choices = [(1, '1'), (2, '2')]
+    ru = SelectField('РУ', coerce=int)
+    active = BooleanField('В сервисе')
+    submit = SubmitField('Добавить АЗС')
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])

@@ -8,7 +8,7 @@
       {{ form.sixdign.label }}<br>
       {{ form.sixdign(size=8) }}<br
       {% for error in form.sixdign.errors %}
-        <span style='color: red;'>[{{ error }}]</span>
+        <span style="color: red;">[{{ error }}]</span>
       {% endfor %}
     </p>
 
@@ -37,9 +37,9 @@
     </p>
 
     <p>
-      {{ form.user.label }}<br>
-      {{ form.user(size=20) }}<br
-      {% for error in form.address.errors %}
+      {{ form.ru.label }}<br>
+      {{ form.ru() }}<br
+      {% for error in form.ru.errors %}
         <span style='color: red;'>[{{ error }}]</span>
       {% endfor %}
     </p>

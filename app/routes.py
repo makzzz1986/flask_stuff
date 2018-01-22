@@ -2,7 +2,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm
-from app.models import User, AZS
+from app.models import User, AZS, RU
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
 from datetime import datetime
@@ -24,7 +24,11 @@ def index():
     #      {'author': {'username': 'Susan'}, 'body': 'Second one'},
     #      {'author': {'username': 'Bob'}, 'body': 'Last one'},
     # ]
-    azses = AZS.query.all()
+    # join_ru = join(azs, ru, azs.ru=azs.id)
+    azses = AZS.query.join(RU, AZS.ru==RU.id)
+    # print(str(AZS.query.join(RU, AZS.ru==RU.id)))
+    print('>>>', dir(azses[0]))
+    # azses = AZS.query.all()
     return render_template('index.html', title='Home', azses=azses)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -53,6 +57,8 @@ def logout():
 @app.route('/add_azs', methods=['GET', 'POST'])
 def add_azs():
     form = AddAzsForm()
+    form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
+    print('>>> GET')
     if form.validate_on_submit():
         # azs = AZS(sixdign=form.sixdign.data, ru=form.ru.data, region_mgmt=form.managed.data, \
         #     num=form.num.data, hostname=form.hostname.data, dzo=form.dzo.data, azs_type=form.azs_type.data, \
@@ -66,21 +72,18 @@ def add_azs():
             azs = AZS(id=form.sixdign.data, sixdign=form.sixdign.data, \
             num=form.num.data, hostname=form.hostname.data, \
             active=form.active.data, address=form.address.data, \
-            data_added=datetime.utcnow(), user_added=current_user.id)
+            data_added=datetime.utcnow(), user_added=current_user.id, \
+            ru=form.ru.data)
         else:
             print('>>> ELSE')
             flash('This AZS ({}) already existed! '.format(str(form.sixdign.data)))
             return redirect(url_for('add_azs'))            
-            
-        #     azs = AZS(sixdign=form.sixdign.data, \
-        #     num=form.num.data, hostname=form.hostname.data, \
-        #     active=form.active.data, address=form.address.data, \
-        #     data_added=datetime.utcnow())
 
         db.session.add(azs)
         db.session.commit()
         flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
         return redirect(url_for('add_azs'))
+    print('>>> Validate:', form.validate_on_submit())
     return render_template('add_azs.html', title='Adding new AZS', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
