@@ -2,7 +2,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm
-from app.models import User
+from app.models import User, AZS
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
 from datetime import datetime
@@ -16,15 +16,16 @@ def before_request():
 
 @app.route('/')
 @app.route('/index')
-@login_required
+# @login_required
 def index():
 #    user = {'username': 'User'}
-    posts = [
-         {'author': {'username': 'John'}, 'body': 'First one'},
-         {'author': {'username': 'Susan'}, 'body': 'Second one'},
-         {'author': {'username': 'Bob'}, 'body': 'Last one'},
-    ]
-    return render_template('index.html', title='Home', posts=posts)
+    # posts = [
+    #      {'author': {'username': 'John'}, 'body': 'First one'},
+    #      {'author': {'username': 'Susan'}, 'body': 'Second one'},
+    #      {'author': {'username': 'Bob'}, 'body': 'Last one'},
+    # ]
+    azses = AZS.query.all()
+    return render_template('index.html', title='Home', azses=azses)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -48,18 +49,39 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@login_required
+# @login_required
 @app.route('/add_azs', methods=['GET', 'POST'])
 def add_azs():
     form = AddAzsForm()
     if form.validate_on_submit():
-        azs = AZS(=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
+        # azs = AZS(sixdign=form.sixdign.data, ru=form.ru.data, region_mgmt=form.managed.data, \
+        #     num=form.num.data, hostname=form.hostname.data, dzo=form.dzo.data, azs_type=form.azs_type.data, \
+        #     active=form.active.data, address=form.address.data)
+        check = AZS.query.filter_by(id=form.sixdign.data).first()
+        print('>>> check:', check)
+        # регистрируем под шестизнаком если нет такого id уже
+        if check is None:
+            print('>>> None')
+            print(current_user)
+            azs = AZS(id=form.sixdign.data, sixdign=form.sixdign.data, \
+            num=form.num.data, hostname=form.hostname.data, \
+            active=form.active.data, address=form.address.data, \
+            data_added=datetime.utcnow(), user_added=current_user.id)
+        else:
+            print('>>> ELSE')
+            flash('This AZS ({}) already existed! '.format(str(form.sixdign.data)))
+            return redirect(url_for('add_azs'))            
+            
+        #     azs = AZS(sixdign=form.sixdign.data, \
+        #     num=form.num.data, hostname=form.hostname.data, \
+        #     active=form.active.data, address=form.address.data, \
+        #     data_added=datetime.utcnow())
+
+        db.session.add(azs)
         db.session.commit()
-        flash('Congratulations, you are now registered!')
-        return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+        flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
+        return redirect(url_for('add_azs'))
+    return render_template('add_azs.html', title='Adding new AZS', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
