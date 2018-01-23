@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask import render_template, flash, redirect, url_for, request
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm
-from app.models import User, AZS, RU
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm, ChangeAzsForm
+from app.models import User, AZS, RU, AZS_Type, DZO, Hardware, Status
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
 from datetime import datetime
@@ -27,7 +27,6 @@ def index():
     # join_ru = join(azs, ru, azs.ru=azs.id)
     azses = AZS.query.join(RU, AZS.ru==RU.id)
     # print(str(AZS.query.join(RU, AZS.ru==RU.id)))
-    print('>>>', dir(azses[0]))
     # azses = AZS.query.all()
     return render_template('index.html', title='Home', azses=azses)
 
@@ -58,33 +57,128 @@ def logout():
 def add_azs():
     form = AddAzsForm()
     form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
+    form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
+    form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
     print('>>> GET')
     if form.validate_on_submit():
         # azs = AZS(sixdign=form.sixdign.data, ru=form.ru.data, region_mgmt=form.managed.data, \
         #     num=form.num.data, hostname=form.hostname.data, dzo=form.dzo.data, azs_type=form.azs_type.data, \
         #     active=form.active.data, address=form.address.data)
         check = AZS.query.filter_by(id=form.sixdign.data).first()
-        print('>>> check:', check)
+        # print('>>> check:', check)
         # регистрируем под шестизнаком если нет такого id уже
         if check is None:
-            print('>>> None')
-            print(current_user)
-            azs = AZS(id=form.sixdign.data, sixdign=form.sixdign.data, \
-            num=form.num.data, hostname=form.hostname.data, \
-            active=form.active.data, address=form.address.data, \
-            data_added=datetime.utcnow(), user_added=current_user.id, \
-            ru=form.ru.data)
+            # print('>>> None')
+            # print(current_user)
+            reg_num = str(form.sixdign.data)[:3]
+            ru_name = RU.query.filter_by(id=form.ru.data).first()
+            hostname_gen = 'AZS-{}-{}-CSP-{}'.format(ru_name.name, reg_num, str(form.num.data))
+            azs = AZS(\
+                id=form.sixdign.data, \
+                sixdign=form.sixdign.data, \
+                num=form.num.data, \
+                hostname=hostname_gen, \
+                active=form.active.data, \
+                address=form.address.data, \
+                data_added=datetime.utcnow(), \
+                user_added=current_user.id, \
+                ru=form.ru.data)
+
+            hardware = Hardware(\
+                id=form.sixdign.data, \
+                azs_id=form.sixdign.data, \
+                gate_install=datetime.utcnow(), \
+                router_install=datetime.utcnow())
+
+            status = Status(\
+                id=form.sixdign.data, \
+                azs_id=form.sixdign.data, \
+                added=datetime.utcnow())
+            if form.active.data is True:
+                status.reason=1
+                status.active=True
+            else:
+                status.reason=2
+                status.active=False
         else:
-            print('>>> ELSE')
+            # print('>>> ELSE')
             flash('This AZS ({}) already existed! '.format(str(form.sixdign.data)))
             return redirect(url_for('add_azs'))            
 
         db.session.add(azs)
+        db.session.add(hardware)
+        db.session.add(status)
         db.session.commit()
-        flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
+        # flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
+        flash('Congratulations, you add ' + hostname_gen + '!')
         return redirect(url_for('add_azs'))
     print('>>> Validate:', form.validate_on_submit())
     return render_template('add_azs.html', title='Adding new AZS', form=form)
+
+# @login_required
+@app.route('/change_azs', methods=['GET', 'POST'])
+def add_azs():
+    form = ChangeAzsForm()
+    
+    # form.sixdign.default=
+    form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
+    form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
+    form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
+    if form.validate_on_submit():
+        # azs = AZS(sixdign=form.sixdign.data, ru=form.ru.data, region_mgmt=form.managed.data, \
+        #     num=form.num.data, hostname=form.hostname.data, dzo=form.dzo.data, azs_type=form.azs_type.data, \
+        #     active=form.active.data, address=form.address.data)
+        check = AZS.query.filter_by(id=form.sixdign.data).first()
+        # print('>>> check:', check)
+        # регистрируем под шестизнаком если нет такого id уже
+        if check is None:
+            # print('>>> None')
+            # print(current_user)
+            reg_num = str(form.sixdign.data)[:3]
+            ru_name = RU.query.filter_by(id=form.ru.data).first()
+            hostname_gen = 'AZS-{}-{}-CSP-{}'.format(ru_name.name, reg_num, str(form.num.data))
+            azs = AZS(\
+                id=form.sixdign.data, \
+                sixdign=form.sixdign.data, \
+                num=form.num.data, \
+                hostname=hostname_gen, \
+                active=form.active.data, \
+                address=form.address.data, \
+                data_added=datetime.utcnow(), \
+                user_added=current_user.id, \
+                ru=form.ru.data)
+
+            hardware = Hardware(\
+                id=form.sixdign.data, \
+                azs_id=form.sixdign.data, \
+                gate_install=datetime.utcnow(), \
+                router_install=datetime.utcnow())
+
+            status = Status(\
+                id=form.sixdign.data, \
+                azs_id=form.sixdign.data, \
+                added=datetime.utcnow())
+            if form.active.data is True:
+                status.reason=1
+                status.active=True
+            else:
+                status.reason=2
+                status.active=False
+        else:
+            # print('>>> ELSE')
+            flash('This AZS ({}) already existed! '.format(str(form.sixdign.data)))
+            return redirect(url_for('add_azs'))            
+
+        db.session.add(azs)
+        db.session.add(hardware)
+        db.session.add(status)
+        db.session.commit()
+        # flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
+        flash('Congratulations, you add ' + hostname_gen + '!')
+        return redirect(url_for('add_azs'))
+    print('>>> Validate:', form.validate_on_submit())
+    return render_template('add_azs.html', title='Adding new AZS', form=form)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

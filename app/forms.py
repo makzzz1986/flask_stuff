@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SubmitField, IntegerField, SelectField
 from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length, NumberRange
-from app.models import User
+from app.models import User,DZO,AZS_Type
 
 
 class EditProfileForm(FlaskForm):
@@ -16,16 +16,42 @@ class LoginForm(FlaskForm):
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
 
+class ChangeAzsForm(FlaskForm):
+    sixdign = IntegerField(disabled=True)
+    ru = SelectField('', coerce=int, option_widget=None)
+    num = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999)])
+    address = StringField('', validators=[DataRequired()])
+    dzo = SelectField('', coerce=int)
+    azs_type = SelectField('', coerce=int)
+
+    gate_vendor = StringField('')
+    gate_version = StringField('')
+    gate_serial = StringField('')
+    gate_lic = StringField('')
+    gate_install = StringField('')
+
+    router_vendor = StringField('')
+    router_model = StringField('')
+    router_serial = StringField('')
+    router_install = StringField('')
+
+    active = BooleanField('')
+    reason = StringField('')
+    added = StringField('')
+    prereason = StringField('')
+    preadded = StringField('')
+
+    submit = SubmitField('Применить изменения')
+
+
 class AddAzsForm(FlaskForm):
-    sixdign = IntegerField('Код', validators=[DataRequired(), NumberRange(min=1, max=999999)])
-    # managed = IntegerField('Managed by', validators=[DataRequired()])
-    num = IntegerField('№', validators=[DataRequired(), NumberRange(min=1, max=999)])
-    address = StringField('Адрес', validators=[DataRequired()])
-    hostname = StringField('Хостнейм', validators=[DataRequired()])
-    # dzo = StringField('DZO', validators=[DataRequired()])
-    # azs_type = StringField('Type', validators=[DataRequired()])
-    ru = SelectField('РУ', coerce=int)
-    active = BooleanField('В сервисе')
+    sixdign = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999999)])
+    num = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999)])
+    address = StringField('', validators=[DataRequired()])
+    dzo = SelectField('', coerce=int)
+    azs_type = SelectField('', coerce=int)
+    ru = SelectField('', coerce=int, option_widget=None)
+    active = BooleanField('')
     submit = SubmitField('Добавить АЗС')
 
 class RegistrationForm(FlaskForm):

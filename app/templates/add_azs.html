@@ -4,47 +4,61 @@
   <h1>Register</h1>
   <form action='' method='post'>
     {{ form.hidden_tag() }}
-    <p>
-      {{ form.sixdign.label }}<br>
-      {{ form.sixdign(size=8) }}<br
-      {% for error in form.sixdign.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-      {% endfor %}
-    </p>
 
-    <p>
-      {{ form.num.label }}<br>
-      {{ form.num(size=6) }}<br
-      {% for error in form.num.errors %}
-        <span style='color: red;'>[{{ error }}]</span>
-      {% endfor %}
-    </p>
 
-    <p>
-      {{ form.hostname.label }}<br>
-      {{ form.hostname(size=6) }}<br
-      {% for error in form.hostname.errors %}
-        <span style='color: red;'>[{{ error }}]</span>
-      {% endfor %}
-    </p>
-
-    <p>
-      {{ form.address.label }}<br>
-      {{ form.address(size=20) }}<br
-      {% for error in form.address.errors %}
-        <span style='color: red;'>[{{ error }}]</span>
-      {% endfor %}
-    </p>
-
-    <p>
-      {{ form.ru.label }}<br>
-      {{ form.ru() }}<br
-      {% for error in form.ru.errors %}
-        <span style='color: red;'>[{{ error }}]</span>
-      {% endfor %}
-    </p>
-
-    <p>{{ form.active() }}  {{ form.active.label }}</p>
+  <table border=1 width=100%>
+    <tr valign="top">
+        <td>КОД</td><td>РУ</td><td>Номер</td><td>Адрес</td><td>ДЗО</td><td>ТИП</td><td>Сервис</td>
+    </tr>
+        <tr valign="top">
+            <td>      
+                <!-- {{ form.sixdign.label }}<br> -->
+                {{ form.sixdign(size=4) }}<br>
+                {% for error in form.sixdign.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+          <td>      
+                <!-- {{ form.ru.label }}<br> -->
+                {{ form.ru }}<br>
+                {% for error in form.sixdign.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                <!-- {{ form.num.label }}<br> -->
+                {{ form.num(size=3) }}<br>
+                {% for error in form.sixdign.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                <!-- {{ form.address.label }}<br> -->
+                {{ form.address(size=20) }}<br>
+                {% for error in form.sixdign.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                <!-- {{ form.dzo.label }}<br> -->
+                {{ form.dzo }}<br>
+                {% for error in form.sixdign.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                <!-- {{ form.azs_type.label }}<br> -->
+                {{ form.azs_type }}<br>
+                {% for error in form.sixdign.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                {{ form.active }}
+                {{ form.active.label }}
+            </td>
+        </tr>
+  </table>
 
     <p>{{ form.submit() }}</p>
   </form>

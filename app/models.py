@@ -59,19 +59,38 @@ class AZS(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sixdign = db.Column(db.Integer, index=True, unique=True)
     ru = db.Column(db.Integer, db.ForeignKey('ru.id'))
-    # region_mgmt = db.Column(db.Integer, db.ForeignKey('region_mgmt.id'))
-    num = db.Column(db.Integer, unique=True)
+    region_mgmt = db.Column(db.Integer, db.ForeignKey('region_mgmt.id'))
+    num = db.Column(db.Integer, unique=False)
     hostname = db.Column(db.String(30))
-    # dzo = db.Column(db.Integer, db.ForeignKey('dzo.id'))
-    # azs_type = db.Column(db.Integer, db.ForeignKey('azs_type.id'))
+    dzo = db.Column(db.Integer, db.ForeignKey('dzo.id'))
+    azs_type = db.Column(db.Integer, db.ForeignKey('azs_type.id'))
     active = db.Column(db.Boolean)
     data_added = db.Column(db.DateTime, default=datetime.utcnow)
     user_added = db.Column(db.Integer, db.ForeignKey('user.id'))
-    # status = db.relationship('Status', uselist=False, back_populates='azs')
+    status = db.relationship('Status', uselist=False, back_populates='azs')
     address = db.Column(db.String(120))
 #    channels = db.relationship('Channels', uselist=False, back_populates='azs')
-#    hardware = db.relationship('Hardware', uselist=False, back_populates='azs')
+    hardware = db.relationship('Hardware', uselist=False, back_populates='azs')
     # ip = db.relationship('Ip', uselist=False, back_populates='azs')
+
+class Hardware(db.Model):
+    __tablename__ = 'hardware'
+    id = db.Column(db.Integer, primary_key=True)
+    # gate_vend = db.Column(db.Integer, db.ForeignKey('vendors_gate.id'))
+    gate_vers = db.Column(db.String(10))
+    gate_serial = db.Column(db.String(10))
+    gate_lic = db.Column(db.String(10))
+    # gate_owner = db.Column(db.Integer, db.ForeignKey('dzo.id'))
+    gate_install = db.Column(db.DateTime, default=datetime.utcnow)
+    # router_vend = db.Column(db.Integer, db.ForeignKey('vendors_router.id'))
+    router_model = db.Column(db.String(10))
+    router_serial = db.Column(db.String(10))
+    # router_lic = db.Column(db.String(10))
+    # router_owner = db.Column(db.Integer, db.ForeignKey('dzo.id'))
+    router_install = db.Column(db.DateTime, default=datetime.utcnow)
+    # zip_addr = db.Column(db.Integer, db.ForeignKey('zip_addr.id'))
+    azs_id = db.Column(db.Integer, db.ForeignKey('azs.id'), nullable=False)
+    azs = db.relationship('AZS', back_populates='hardware')
     
 class RU(db.Model):
     __tablename__ = 'ru'
@@ -80,23 +99,47 @@ class RU(db.Model):
     geo = db.Column(db.String(60))
     azs = db.relationship('AZS', backref='RU', lazy='dynamic')
 
-# class Region_mgmt(db.Model):
-#     __tablename__ = 'region_mgmt'
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(20))
-#     azs = db.relationship('AZS', backref='Region', lazy='dynamic')
+class Region_mgmt(db.Model):
+    __tablename__ = 'region_mgmt'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+    azs = db.relationship('AZS', backref='Region', lazy='dynamic')
 
-# class DZO(db.Model):
-#     __tablename__ = 'dzo'
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(30))
-#     service = db.Column(db.String(60))
-#     manager = db.Column(db.String(60))
-#     azs = db.relationship('AZS', backref='DZO', lazy='dynamic')
+class DZO(db.Model):
+    __tablename__ = 'dzo'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30))
+    service = db.Column(db.String(60))
+    manager = db.Column(db.String(60))
+    azs = db.relationship('AZS', backref='DZO', lazy='dynamic')
 
-# class AZS_Type(db.Model):
-#     __tablename__ = 'azs_type'
-#     id = db.Column(db.Integer, primary_key=True)
-#     azstype = db.Column(db.String(30))
-#     azs = db.relationship('AZS', backref='type', lazy='dynamic')
+class AZS_Type(db.Model):
+    __tablename__ = 'azs_type'
+    id = db.Column(db.Integer, primary_key=True)
+    azstype = db.Column(db.String(30))
+    azs = db.relationship('AZS', backref='type', lazy='dynamic')
 
+class Status(db.Model):
+    __tablename__ = 'status'
+    id = db.Column(db.Integer, primary_key=True)    
+    active = db.Column(db.Boolean)
+    reason = db.Column(db.Integer, db.ForeignKey('reasons.id'))
+    # reason = db.relationship('Reason', backref='reason', lazy='dynamic')
+    added = db.Column(db.DateTime, default=datetime.utcnow)
+    prereason = db.Column(db.Integer, db.ForeignKey('prereasons.id'))
+    # prereason = db.relationship('Reason', backref='prereason', lazy='dynamic')
+    preadded = db.Column(db.DateTime, default=datetime.utcnow)
+    azs_id = db.Column(db.Integer, db.ForeignKey('azs.id'))
+    azs = db.relationship('AZS', back_populates='status')
+
+class Reasons(db.Model):
+    __tablename__ = 'reasons'
+    id = db.Column(db.Integer, primary_key=True)
+    reason_name = db.Column(db.String(30))
+    status = db.relationship('Status', backref='reasons', lazy='dynamic')
+
+class PreReasons(db.Model):
+    __tablename__ = 'prereasons'
+    id = db.Column(db.Integer, primary_key=True)
+    reason_name = db.Column(db.String(30))
+    status = db.relationship('Status', backref='prereasons', lazy='dynamic')
