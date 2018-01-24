@@ -8,7 +8,7 @@
     </tr>
     {% for azs in azses %}
         <tr valign="top">
-          <td>{{ azs.sixdign }}</td>
+          <td><a href="{{ url_for('change_azs', sixdign=azs.sixdign) }}">{{ azs.sixdign }}</a></td>
           <td>{{ azs.RU.name }}</td>
           <td>{{ azs.num }}</td>
           <td>{{ azs.hostname }}</td>

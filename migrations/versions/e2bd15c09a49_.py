@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 70795a439482
+Revision ID: e2bd15c09a49
 Revises: 
-Create Date: 2018-01-23 14:20:28.847968
+Create Date: 2018-01-24 14:38:51.810799
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '70795a439482'
+revision = 'e2bd15c09a49'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -61,6 +61,18 @@ def upgrade():
     sa.Column('geo', sa.String(length=60), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('vendors_gate',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=20), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_vendors_gate_name'), 'vendors_gate', ['name'], unique=False)
+    op.create_table('vendors_router',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=20), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_vendors_router_name'), 'vendors_router', ['name'], unique=False)
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=64), nullable=True),
@@ -108,16 +120,19 @@ def upgrade():
     op.create_index(op.f('ix_comment_timestamp'), 'comment', ['timestamp'], unique=False)
     op.create_table('hardware',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('gate_vend', sa.Integer(), nullable=True),
     sa.Column('gate_vers', sa.String(length=10), nullable=True),
     sa.Column('gate_serial', sa.String(length=10), nullable=True),
     sa.Column('gate_lic', sa.String(length=10), nullable=True),
     sa.Column('gate_install', sa.DateTime(), nullable=True),
-    sa.Column('router_vers', sa.String(length=10), nullable=True),
+    sa.Column('router_vend', sa.Integer(), nullable=True),
+    sa.Column('router_model', sa.String(length=10), nullable=True),
     sa.Column('router_serial', sa.String(length=10), nullable=True),
-    sa.Column('router_lic', sa.String(length=10), nullable=True),
     sa.Column('router_install', sa.DateTime(), nullable=True),
     sa.Column('azs_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['azs_id'], ['azs.id'], ),
+    sa.ForeignKeyConstraint(['gate_vend'], ['vendors_gate.id'], ),
+    sa.ForeignKeyConstraint(['router_vend'], ['vendors_router.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('status',
@@ -126,6 +141,7 @@ def upgrade():
     sa.Column('reason', sa.Integer(), nullable=True),
     sa.Column('added', sa.DateTime(), nullable=True),
     sa.Column('prereason', sa.Integer(), nullable=True),
+    sa.Column('preadded', sa.DateTime(), nullable=True),
     sa.Column('azs_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['azs_id'], ['azs.id'], ),
     sa.ForeignKeyConstraint(['prereason'], ['prereasons.id'], ),
@@ -146,6 +162,10 @@ def downgrade():
     op.drop_index(op.f('ix_user_username'), table_name='user')
     op.drop_index(op.f('ix_user_email'), table_name='user')
     op.drop_table('user')
+    op.drop_index(op.f('ix_vendors_router_name'), table_name='vendors_router')
+    op.drop_table('vendors_router')
+    op.drop_index(op.f('ix_vendors_gate_name'), table_name='vendors_gate')
+    op.drop_table('vendors_gate')
     op.drop_table('ru')
     op.drop_table('region_mgmt')
     op.drop_table('reasons')

@@ -9,12 +9,12 @@
 <h2>Общее:</h2>
   <table border=1 width=100%>
     <tr valign="top">
-        <td>КОД</td><td>РУ</td><td>Номер</td><td>Hostname</td><td>Адрес</td><td>ДЗО</td><td>ТИП</td><td>Сервис</td>
+        <td>КОД</td><td>РУ</td><td>Номер</td><td>Адрес</td><td>ДЗО</td><td>ТИП</td><td>Сервис</td>
     </tr>
         <tr valign="top">
             <td>      
                 <!-- {{ form.sixdign.label }}<br> -->
-                {{ form.sixdign(size=4, readonly=true) }}<br>
+                {{ form.sixdign(size=4) }}<br>
                 {% for error in form.sixdign.errors %}
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
@@ -22,51 +22,42 @@
           <td>      
                 <!-- {{ form.ru.label }}<br> -->
                 {{ form.ru }}<br>
-                {% for error in form.ru.errors %}
+                {% for error in form.sixdign.errors %}
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
             </td>
             <td>      
                 <!-- {{ form.num.label }}<br> -->
-                {{ form.num(size=1) }}<br>
-                {% for error in form.num.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </td>
-            <td>      
-                {{ form.hostname(size=12) }}<br>
-                {% for error in form.hostname.errors %}
+                {{ form.num(size=3) }}<br>
+                {% for error in form.sixdign.errors %}
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
             </td>
             <td>      
                 <!-- {{ form.address.label }}<br> -->
-                {{ form.address(size=24) }}<br>
-                {% for error in form.address.errors %}
+                {{ form.address(size=20) }}<br>
+                {% for error in form.sixdign.errors %}
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
             </td>
             <td>      
                 <!-- {{ form.dzo.label }}<br> -->
                 {{ form.dzo }}<br>
-                {% for error in form.dzo.errors %}
+                {% for error in form.sixdign.errors %}
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
             </td>
             <td>      
                 <!-- {{ form.azs_type.label }}<br> -->
                 {{ form.azs_type }}<br>
-                {% for error in form.azs_type.errors %}
+                {% for error in form.sixdign.errors %}
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
-            </td>
-            <td>      
-                {{ form.active }}<br>
             </td>
         </tr>
   </table>
 
-<hr>
+<br><hr>
 
 <h2>Криптошлюз:</h2>
   <table border=1 width=100%>
@@ -107,7 +98,7 @@
         </tr>
   </table>
 
-<hr>
+<br><hr>
 
 <h2>Маршрутизатор:</h2>
   <table border=1 width=100%>
@@ -136,6 +127,45 @@
             <td>      
                 {{ form.router_install(size=10) }}<br>
                 {% for error in form.router_install.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+        </tr>
+  </table>
+
+<br><hr>
+
+<h2>Статус:</h2>
+  <table border=1 width=100%>
+    <tr valign="top">
+        <td>В сервисе</td><td>Статус</td><td>Дата перехода в текущий статус</td><td>Прошлый статус</td><td>Дата перехода в прошлый статус</td>
+    </tr>
+        <tr valign="top">
+            <td>      
+                {{ form.active }}
+                {{ form.active.label }}
+            </td>
+          <td>      
+                {{ form.reason(size=5) }}<br>
+                {% for error in form.reason.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                {{ form.added(size=10) }}<br>
+                {% for error in form.added.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                {{ form.prereason(size=5) }}<br>
+                {% for error in form.prereason.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </td>
+            <td>      
+                {{ form.preadded(size=10) }}<br>
+                {% for error in form.preadded.errors %}
                 <span style="color: red;">[{{ error }}]</span>
                 {% endfor %}
             </td>

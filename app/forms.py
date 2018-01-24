@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SubmitField, IntegerField, SelectField
-from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length, NumberRange
+from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, Length, NumberRange, Optional
 from app.models import User,DZO,AZS_Type
 
 
@@ -17,29 +17,31 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class ChangeAzsForm(FlaskForm):
-    sixdign = IntegerField(disabled=True)
+    sixdign = IntegerField()
     ru = SelectField('', coerce=int, option_widget=None)
     num = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999)])
+    hostname = StringField('', validators=[DataRequired()])
     address = StringField('', validators=[DataRequired()])
     dzo = SelectField('', coerce=int)
     azs_type = SelectField('', coerce=int)
+    active = BooleanField()
 
     gate_vendor = StringField('')
-    gate_version = StringField('')
-    gate_serial = StringField('')
-    gate_lic = StringField('')
-    gate_install = StringField('')
+    gate_vers = StringField('', validators=[Optional()])
+    gate_serial = StringField('', validators=[Optional()])
+    gate_lic = StringField('', validators=[Optional()])
+    gate_install = StringField('', validators=[Optional()])
 
-    router_vendor = StringField('')
-    router_model = StringField('')
-    router_serial = StringField('')
-    router_install = StringField('')
+    router_vendor = StringField('', validators=[Optional()])
+    router_model = StringField('', validators=[Optional()])
+    router_serial = StringField('', validators=[Optional()])
+    router_install = StringField('', validators=[Optional()])
 
-    active = BooleanField('')
-    reason = StringField('')
-    added = StringField('')
-    prereason = StringField('')
-    preadded = StringField('')
+    # active = BooleanField('')
+    # reason = StringField('')
+    # added = StringField('')
+    # prereason = StringField('')
+    # preadded = StringField('')
 
     submit = SubmitField('Применить изменения')
 

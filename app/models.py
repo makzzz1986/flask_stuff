@@ -76,13 +76,13 @@ class AZS(db.Model):
 class Hardware(db.Model):
     __tablename__ = 'hardware'
     id = db.Column(db.Integer, primary_key=True)
-    # gate_vend = db.Column(db.Integer, db.ForeignKey('vendors_gate.id'))
+    gate_vend = db.Column(db.Integer, db.ForeignKey('vendors_gate.id'))
     gate_vers = db.Column(db.String(10))
     gate_serial = db.Column(db.String(10))
     gate_lic = db.Column(db.String(10))
     # gate_owner = db.Column(db.Integer, db.ForeignKey('dzo.id'))
     gate_install = db.Column(db.DateTime, default=datetime.utcnow)
-    # router_vend = db.Column(db.Integer, db.ForeignKey('vendors_router.id'))
+    router_vend = db.Column(db.Integer, db.ForeignKey('vendors_router.id'))
     router_model = db.Column(db.String(10))
     router_serial = db.Column(db.String(10))
     # router_lic = db.Column(db.String(10))
@@ -91,6 +91,18 @@ class Hardware(db.Model):
     # zip_addr = db.Column(db.Integer, db.ForeignKey('zip_addr.id'))
     azs_id = db.Column(db.Integer, db.ForeignKey('azs.id'), nullable=False)
     azs = db.relationship('AZS', back_populates='hardware')
+
+class Vendors_gate(db.Model):
+    __tablename__ = 'vendors_gate'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), index=True)
+    hardware = db.relationship('Hardware', backref='vend_gate', lazy='dynamic')
+
+class Vendors_router(db.Model):
+    __tablename__ = 'vendors_router'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), index=True)
+    hardware = db.relationship('Hardware', backref='vend_rtr', lazy='dynamic')
     
 class RU(db.Model):
     __tablename__ = 'ru'

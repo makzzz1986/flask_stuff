@@ -59,7 +59,7 @@ def add_azs():
     form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
     form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
     form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
-    print('>>> GET')
+    print('>>>', form.is_submitted())
     if form.validate_on_submit():
         # azs = AZS(sixdign=form.sixdign.data, ru=form.ru.data, region_mgmt=form.managed.data, \
         #     num=form.num.data, hostname=form.hostname.data, dzo=form.dzo.data, azs_type=form.azs_type.data, \
@@ -82,7 +82,9 @@ def add_azs():
                 address=form.address.data, \
                 data_added=datetime.utcnow(), \
                 user_added=current_user.id, \
-                ru=form.ru.data)
+                ru=form.ru.data,\
+                dzo=form.dzo.data, \
+                azs_type=form.azs_type.data)
 
             hardware = Hardware(\
                 id=form.sixdign.data, \
@@ -102,7 +104,7 @@ def add_azs():
                 status.active=False
         else:
             # print('>>> ELSE')
-            flash('This AZS ({}) already existed! '.format(str(form.sixdign.data)))
+            flash('Код ({}) уже существует! '.format(str(form.sixdign.data)))
             return redirect(url_for('add_azs'))            
 
         db.session.add(azs)
@@ -110,74 +112,62 @@ def add_azs():
         db.session.add(status)
         db.session.commit()
         # flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
-        flash('Congratulations, you add ' + hostname_gen + '!')
+        flash('Вы добавили новую АЗС: ' + hostname_gen + '!')
         return redirect(url_for('add_azs'))
     print('>>> Validate:', form.validate_on_submit())
     return render_template('add_azs.html', title='Adding new AZS', form=form)
 
 # @login_required
-@app.route('/change_azs', methods=['GET', 'POST'])
-def add_azs():
-    form = ChangeAzsForm()
-    
-    # form.sixdign.default=
-    form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
-    form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
-    form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
-    if form.validate_on_submit():
-        # azs = AZS(sixdign=form.sixdign.data, ru=form.ru.data, region_mgmt=form.managed.data, \
-        #     num=form.num.data, hostname=form.hostname.data, dzo=form.dzo.data, azs_type=form.azs_type.data, \
-        #     active=form.active.data, address=form.address.data)
-        check = AZS.query.filter_by(id=form.sixdign.data).first()
-        # print('>>> check:', check)
-        # регистрируем под шестизнаком если нет такого id уже
-        if check is None:
-            # print('>>> None')
-            # print(current_user)
-            reg_num = str(form.sixdign.data)[:3]
-            ru_name = RU.query.filter_by(id=form.ru.data).first()
-            hostname_gen = 'AZS-{}-{}-CSP-{}'.format(ru_name.name, reg_num, str(form.num.data))
-            azs = AZS(\
-                id=form.sixdign.data, \
-                sixdign=form.sixdign.data, \
-                num=form.num.data, \
-                hostname=hostname_gen, \
-                active=form.active.data, \
-                address=form.address.data, \
-                data_added=datetime.utcnow(), \
-                user_added=current_user.id, \
-                ru=form.ru.data)
+# @app.route('/change_azs')
+@app.route('/change_azs/<sixdign>', methods=['GET', 'POST'])
+def change_azs(sixdign):
+    azs = AZS.query.filter_by(id=int(sixdign)).first_or_404()
+    hardware = Hardware.query.filter_by(id=int(sixdign)).first_or_404()
+    status = Status.query.filter_by(id=int(sixdign)).first_or_404()
 
-            hardware = Hardware(\
-                id=form.sixdign.data, \
-                azs_id=form.sixdign.data, \
-                gate_install=datetime.utcnow(), \
-                router_install=datetime.utcnow())
+    if request.method == 'GET':
+        form = ChangeAzsForm(ru=azs.ru, dzo=azs.dzo, azs_type=azs.azs_type, active=azs.active)
 
-            status = Status(\
-                id=form.sixdign.data, \
-                azs_id=form.sixdign.data, \
-                added=datetime.utcnow())
-            if form.active.data is True:
-                status.reason=1
-                status.active=True
-            else:
-                status.reason=2
-                status.active=False
-        else:
-            # print('>>> ELSE')
-            flash('This AZS ({}) already existed! '.format(str(form.sixdign.data)))
-            return redirect(url_for('add_azs'))            
+        form.sixdign.data = sixdign
+        print('>>> GET!:', sixdign)
+        form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
+        form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
+        form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
+        form.hostname.data = azs.hostname
+        form.address.data = azs.address
+        form.num.data = azs.num
 
-        db.session.add(azs)
-        db.session.add(hardware)
-        db.session.add(status)
-        db.session.commit()
-        # flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
-        flash('Congratulations, you add ' + hostname_gen + '!')
-        return redirect(url_for('add_azs'))
-    print('>>> Validate:', form.validate_on_submit())
-    return render_template('add_azs.html', title='Adding new AZS', form=form)
+        form.gate_vers.data = hardware.gate_vers
+        form.gate_serial.data = hardware.gate_serial
+        form.gate_lic.data = hardware.gate_lic
+        form.gate_install.data = hardware.gate_install
+
+        form.router_model.data = hardware.router_model
+        form.router_serial.data = hardware.router_serial
+        form.router_install.data = hardware.router_install
+    else:
+        form = ChangeAzsForm()
+
+        form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
+        form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
+        form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
+
+        print('>>> BEFORE VALIDATE')
+        if form.validate_on_submit():
+            print('>>> AFTER VALIDATE')        
+            hardware = Hardware.query.filter_by(id=int(sixdign))
+
+            print('>>>', form.gate_vers.data)
+            hardware.update({\
+                'gate_vers': form.gate_vers.data, \
+                'gate_serial': form.gate_serial.data, \
+                'gate_lic': form.gate_lic.data, \
+                'router_model': form.router_model.data, \
+                'router_serial': form.router_serial.data})
+            db.session.commit()
+            flash('Изменения записаны!')
+
+    return render_template('change_azs.html', title='Изменение параметров АЗС', form=form)
 
 
 @app.route('/register', methods=['GET', 'POST'])
