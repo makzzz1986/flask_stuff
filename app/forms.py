@@ -22,18 +22,19 @@ class ChangeAzsForm(FlaskForm):
     num = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999)])
     hostname = StringField('', validators=[DataRequired()])
     address = StringField('', validators=[DataRequired()])
-    dzo = SelectField('', coerce=int)
-    azs_type = SelectField('', coerce=int)
+    mss_ip = StringField('', validators=[DataRequired()])
     active = BooleanField()
 
-    gate_vendor = StringField('')
-    gate_vers = StringField('', validators=[Optional()])
+    dzo = SelectField('', coerce=int)
+    azs_type = SelectField('', coerce=int)
+    region_mgmt = SelectField('', coerce=int)
+
+    gate_model = SelectField('', coerce=int, option_widget=None)
     gate_serial = StringField('', validators=[Optional()])
     gate_lic = StringField('', validators=[Optional()])
     gate_install = StringField('', validators=[Optional()])
 
-    router_vendor = StringField('', validators=[Optional()])
-    router_model = StringField('', validators=[Optional()])
+    router_model = SelectField('', coerce=int, option_widget=None)
     router_serial = StringField('', validators=[Optional()])
     router_install = StringField('', validators=[Optional()])
 
@@ -49,10 +50,13 @@ class ChangeAzsForm(FlaskForm):
 class AddAzsForm(FlaskForm):
     sixdign = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999999)])
     num = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999)])
+    mss_ip = StringField('', validators=[DataRequired()])
     address = StringField('', validators=[DataRequired()])
     dzo = SelectField('', coerce=int)
     azs_type = SelectField('', coerce=int)
     ru = SelectField('', coerce=int, option_widget=None)
+    gate = SelectField('', coerce=int, option_widget=None)
+    router = SelectField('', coerce=int, option_widget=None)
     active = BooleanField('')
     submit = SubmitField('Добавить АЗС')
 

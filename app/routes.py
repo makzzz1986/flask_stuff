@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from flask import render_template, flash, redirect, url_for, request
+import helpers
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm, ChangeAzsForm
-from app.models import User, AZS, RU, AZS_Type, DZO, Hardware, Status
+from app.models import User, AZS, RU, AZS_Type, DZO, Hardware, Status, Models_gate, Models_router, Region_mgmt
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
 from datetime import datetime
@@ -18,16 +19,7 @@ def before_request():
 @app.route('/index')
 # @login_required
 def index():
-#    user = {'username': 'User'}
-    # posts = [
-    #      {'author': {'username': 'John'}, 'body': 'First one'},
-    #      {'author': {'username': 'Susan'}, 'body': 'Second one'},
-    #      {'author': {'username': 'Bob'}, 'body': 'Last one'},
-    # ]
-    # join_ru = join(azs, ru, azs.ru=azs.id)
     azses = AZS.query.join(RU, AZS.ru==RU.id)
-    # print(str(AZS.query.join(RU, AZS.ru==RU.id)))
-    # azses = AZS.query.all()
     return render_template('index.html', title='Home', azses=azses)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -55,46 +47,58 @@ def logout():
 # @login_required
 @app.route('/add_azs', methods=['GET', 'POST'])
 def add_azs():
-    form = AddAzsForm()
+    form = AddAzsForm(gate=1, router=1)
+
     form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
     form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
+    form.gate.choices = [(gate.id, gate.name) for gate in Models_gate.query.all()]
+    form.router.choices = [(router.id, router.name) for router in Models_router.query.all()]
     form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
+
     print('>>>', form.is_submitted())
     if form.validate_on_submit():
-        # azs = AZS(sixdign=form.sixdign.data, ru=form.ru.data, region_mgmt=form.managed.data, \
-        #     num=form.num.data, hostname=form.hostname.data, dzo=form.dzo.data, azs_type=form.azs_type.data, \
-        #     active=form.active.data, address=form.address.data)
         check = AZS.query.filter_by(id=form.sixdign.data).first()
-        # print('>>> check:', check)
         # регистрируем под шестизнаком если нет такого id уже
         if check is None:
-            # print('>>> None')
-            # print(current_user)
             reg_num = str(form.sixdign.data)[:3]
             ru_name = RU.query.filter_by(id=form.ru.data).first()
             hostname_gen = 'AZS-{}-{}-CSP-{}'.format(ru_name.name, reg_num, str(form.num.data))
-            azs = AZS(\
-                id=form.sixdign.data, \
-                sixdign=form.sixdign.data, \
-                num=form.num.data, \
-                hostname=hostname_gen, \
-                active=form.active.data, \
-                address=form.address.data, \
-                data_added=datetime.utcnow(), \
-                user_added=current_user.id, \
-                ru=form.ru.data,\
-                dzo=form.dzo.data, \
-                azs_type=form.azs_type.data)
 
-            hardware = Hardware(\
-                id=form.sixdign.data, \
-                azs_id=form.sixdign.data, \
-                gate_install=datetime.utcnow(), \
-                router_install=datetime.utcnow())
+            # подбираем дефолтный регион управления
+            region_mgmt = Region_mgmt.query.all()
+            ru_region = helpers.get_region_mgmt(ru_name.name)
+            region_mgmt_chosen = 0
+            for one_region in region_mgmt:
+                if one_region.name == ru_region:
+                    region_mgmt_chosen = one_region.id
 
-            status = Status(\
-                id=form.sixdign.data, \
-                azs_id=form.sixdign.data, \
+            azs = AZS(
+                id=form.sixdign.data,
+                sixdign=form.sixdign.data,
+                num=form.num.data,
+                hostname=hostname_gen,
+                active=form.active.data,
+                address=form.address.data,
+                data_added=datetime.utcnow(),
+                user_added=current_user.id,
+                ru=form.ru.data,
+                region_mgmt=region_mgmt_chosen,
+                dzo=form.dzo.data,
+                azs_type=form.azs_type.data,
+                mss_ip=form.mss_ip.data,
+                just_added=True)
+
+            hardware = Hardware(
+                id=form.sixdign.data, 
+                azs_id=form.sixdign.data, 
+                gate_install=datetime.utcnow(), 
+                router_install=datetime.utcnow(),
+                gate_model=form.gate.data,
+                router_model=form.router.data)
+
+            status = Status(
+                id=form.sixdign.data, 
+                azs_id=form.sixdign.data, 
                 added=datetime.utcnow())
             if form.active.data is True:
                 status.reason=1
@@ -126,43 +130,67 @@ def change_azs(sixdign):
     status = Status.query.filter_by(id=int(sixdign)).first_or_404()
 
     if request.method == 'GET':
-        form = ChangeAzsForm(ru=azs.ru, dzo=azs.dzo, azs_type=azs.azs_type, active=azs.active)
+        form = ChangeAzsForm(ru=azs.ru, dzo=azs.dzo, azs_type=azs.azs_type, 
+            active=azs.active, router_model=hardware.id, gate_model=hardware.id, 
+            region_mgmt=azs.region_mgmt)
 
         form.sixdign.data = sixdign
-        print('>>> GET!:', sixdign)
         form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
         form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
         form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
+        form.region_mgmt.choices = [(region_mgmt.id, region_mgmt.name) for region_mgmt in Region_mgmt.query.all()]
+
         form.hostname.data = azs.hostname
         form.address.data = azs.address
+        form.mss_ip.data = azs.mss_ip
         form.num.data = azs.num
 
-        form.gate_vers.data = hardware.gate_vers
+        form.gate_model.choices = [(gate_model.id, gate_model.name) for gate_model in Models_gate.query.all()]
+        form.gate_model.data = hardware.gate_model
         form.gate_serial.data = hardware.gate_serial
         form.gate_lic.data = hardware.gate_lic
         form.gate_install.data = hardware.gate_install
 
+        form.router_model.choices = [(router_model.id, router_model.name) for router_model in Models_router.query.all()]
         form.router_model.data = hardware.router_model
         form.router_serial.data = hardware.router_serial
         form.router_install.data = hardware.router_install
+
     else:
         form = ChangeAzsForm()
 
         form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
         form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
         form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
+        form.router_model.choices = [(router_model.id, router_model.name) for router_model in Models_router.query.all()]
+        form.gate_model.choices = [(gate_model.id, gate_model.name) for gate_model in Models_gate.query.all()]
+        form.region_mgmt.choices = [(region_mgmt.id, region_mgmt.name) for region_mgmt in Region_mgmt.query.all()]
 
         print('>>> BEFORE VALIDATE')
         if form.validate_on_submit():
             print('>>> AFTER VALIDATE')        
             hardware = Hardware.query.filter_by(id=int(sixdign))
+            azs = AZS.query.filter_by(id=int(sixdign))
+            status = Status.query.filter_by(id=int(sixdign))
 
-            print('>>>', form.gate_vers.data)
-            hardware.update({\
-                'gate_vers': form.gate_vers.data, \
-                'gate_serial': form.gate_serial.data, \
-                'gate_lic': form.gate_lic.data, \
-                'router_model': form.router_model.data, \
+            azs.update({
+                'num': form.num.data, 
+                'hostname': form.hostname.data, 
+                'address': form.address.data, 
+                'active': form.active.data,
+                'mss_ip': form.mss_ip.data,
+
+                'ru': form.ru.data, 
+                'dzo': form.dzo.data, 
+                'region_mgmt': form.region_mgmt.data, 
+                'azs_type': form.azs_type.data, 
+                })
+
+            hardware.update({
+                'gate_model': form.gate_model.data, 
+                'gate_serial': form.gate_serial.data, 
+                'gate_lic': form.gate_lic.data, 
+                'router_model': form.router_model.data, 
                 'router_serial': form.router_serial.data})
             db.session.commit()
             flash('Изменения записаны!')

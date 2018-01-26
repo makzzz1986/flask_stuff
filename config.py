@@ -7,3 +7,11 @@ class Config(object):
     PORT = 5000
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:123@127.0.0.1/uzistuff'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    JOBS = [
+    {
+    'id': 'renew_ip',
+    'func': 'app:renew_ip',
+    'trigger': 'interval',
+    'seconds': 10
+    }
+    ]
