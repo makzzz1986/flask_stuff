@@ -9,9 +9,9 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JOBS = [
     {
-    'id': 'renew_ip',
-    'func': 'app:renew_ip',
+    'id': 'check_just_added',
+    'func': 'app:check_just_added',
     'trigger': 'interval',
-    'seconds': 10
+    'minutes': 1
     }
     ]

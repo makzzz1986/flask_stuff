@@ -4,7 +4,7 @@
   <h1>Hello, {{ current_user.username }}!</h1>
   <table border=1 width=100%>
     <tr valign="top">
-        <td>КОД</td><td>РУ</td><td>Номер</td><td>Hostname</td><td>Адрес</td><td>Добавлен</td><td>В сервисе</td>
+        <td>КОД</td><td>РУ</td><td>Номер</td><td>Hostname</td><td>Адрес</td><td>Подсети</td><td>Добавлен</td><td>В сервисе</td>
     </tr>
     {% for azs in azses %}
         <tr valign="top">
@@ -13,6 +13,7 @@
           <td>{{ azs.num }}</td>
           <td>{{ azs.hostname }}</td>
           <td>{{ azs.address }}</td>
+          <td><a href="{{ url_for('ip_azs', sixdign=azs.sixdign) }}">{{ azs.mss_ip }}</a></td>
           <td>{{ azs.data_added }}</td>
           <td>{{ azs.active }}</td>
         </tr>

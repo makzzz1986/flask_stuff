@@ -62,9 +62,10 @@ class Get_subnets():
                             next_line = False
                             if line.startswith(' ip address'):
                                 int_ip = line.split()[2]
+                                int_standart_mask = line.split()[3]
                                 int_mask = self.subnet_translate(line.split()[3])
                                 interface = 'eth' + temp_int.split('/')[1]
-                                interfaces[interface] = str(IPAddress(IPNetwork(int_ip+int_mask).cidr))
+                                interfaces[interface] = str(IPAddress(IPNetwork(int_ip+int_mask).cidr))+' '+int_standart_mask
 
                                 # if IPAddress(ip) in IPNetwork(int_ip+int_mask):
                                     # subnet = str(IPNetwork(int_ip+int_mask).cidr)

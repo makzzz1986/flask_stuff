@@ -79,8 +79,9 @@ class Ip(db.Model):
     __tablename__ = 'ip'
     id = db.Column(db.Integer, primary_key=True)
     interface = db.Column(db.String(10))
-    net = db.Column(db.String(20), unique=True)
+    net = db.Column(db.String(35), unique=True)
     description = db.Column(db.String(30))
+    renew_last_time = db.Column(db.DateTime, default=datetime.utcnow)
     azs = db.Column(db.Integer, db.ForeignKey('azs.id'))
 
 class Hardware(db.Model):

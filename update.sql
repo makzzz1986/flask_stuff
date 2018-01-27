@@ -46,11 +46,11 @@ insert into models_router (id, name) values (4, 'Huawei');
 insert into models_router (id, name) values (5, 'Juniper');
 insert into models_router (id, name) values (6, 'Eltex');
 
-insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip) values (222154, 222154, 2, 154, 'AZS-MSK-222-CRYPTO-154', 1, 'Москва, Горьковская 44', 1, 2, False, '192.168.1.154');
-insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip) values (222645, 222645, 8, 645, 'AZS-CHL-222-CRYPTO-645', 2, 'Челябинск, Ленина 12', 1, 2, True, '192.168.2.34');
-insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip) values (111314, 111314, 5, 314, 'AZS-KMR-111-CRYPTO-314', 2, 'Новокузнецк, Тольятти 34', 1, 2, True, '192.168.44.2');
-insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip) values (111222, 111222, 6, 222, 'AZS-TUM-111-CRYPTO-222', 1, 'Тюмень, Гагарина 29', 2, 1, False, '192.168.128.15');
-insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip) values (111333, 111333, 3, 333, 'AZS-SPB-111-CRYPTO-333', 2, 'Санкт-Петербург, Шушары', 2, 1, False, '192.168.2.101');
+insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip, just_added) values (222154, 222154, 2, 154, 'AZS-MSK-222-CRYPTO-154', 1, 'Москва, Горьковская 44', 1, 2, False, '192.168.1.154', True);
+insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip, just_added) values (222645, 222645, 8, 645, 'AZS-CHL-222-CRYPTO-645', 2, 'Челябинск, Ленина 12', 1, 2, True, '192.168.2.34', True);
+insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip, just_added) values (111314, 111314, 5, 314, 'AZS-KMR-111-CRYPTO-314', 2, 'Новокузнецк, Тольятти 34', 1, 2, True, '192.168.44.2', True);
+insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip, just_added) values (111222, 111222, 6, 222, 'AZS-TUM-111-CRYPTO-222', 1, 'Тюмень, Гагарина 29', 2, 1, False, '192.168.128.15', True);
+insert into azs (id, sixdign, ru, num, hostname, user_added, address, dzo, azs_type, active, mss_ip, just_added) values (111333, 111333, 3, 333, 'AZS-SPB-111-CRYPTO-333', 2, 'Санкт-Петербург, Шушары', 2, 1, False, '192.168.2.101', True);
 insert into hardware (id, azs_id) values (222154, 222154);
 insert into hardware (id, azs_id) values (222645, 222645);
 insert into hardware (id, azs_id) values (111314, 111314);

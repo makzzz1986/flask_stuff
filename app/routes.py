@@ -2,8 +2,8 @@
 from flask import render_template, flash, redirect, url_for, request
 import helpers
 from app import app, db
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm, ChangeAzsForm
-from app.models import User, AZS, RU, AZS_Type, DZO, Hardware, Status, Models_gate, Models_router, Region_mgmt
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm, ChangeAzsForm, EditIpForm
+from app.models import User, AZS, RU, AZS_Type, DZO, Hardware, Status, Models_gate, Models_router, Region_mgmt, Ip
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
 from datetime import datetime
@@ -119,7 +119,30 @@ def add_azs():
         flash('Вы добавили новую АЗС: ' + hostname_gen + '!')
         return redirect(url_for('add_azs'))
     print('>>> Validate:', form.validate_on_submit())
-    return render_template('add_azs.html', title='Adding new AZS', form=form)
+    return render_template('add_azs.html', title='Добавление новой АЗС', form=form)
+
+
+# @login_required
+@app.route('/ip_azs/<sixdign>', methods=['GET', 'POST'])
+def ip_azs(sixdign):
+    print(request.form)
+    azs = AZS.query.filter_by(id=sixdign).first_or_404()
+    subnets = Ip.query.filter_by(azs=sixdign).all()
+
+    form = EditIpForm()
+    azs_title = 'АЗС:{}, {} по адресу {}'.format(sixdign, azs.hostname, azs.address)
+
+    # data = request.form['32']
+    print('>>> REQUEST')
+    # print(data)
+    # form.description.data = 'GHH!'
+    if request.method == 'GET':
+        return render_template('ip_azs.html', title='Адресация на шлюзе', azs_title=azs_title, subnets=subnets, form=form)
+    else:
+        print('>>> BEFORE VALIDATE')
+        if form.validate_on_submit():
+            print('>>> AFTER VALIDATE')  
+            pass
 
 # @login_required
 # @app.route('/change_azs')
