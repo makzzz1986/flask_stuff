@@ -124,7 +124,6 @@ def add_azs():
                     region_mgmt_chosen = one_region.id
 
             azs = AZS(
-                id=form.sixdign.data,
                 sixdign=form.sixdign.data,
                 num=form.num.data,
                 hostname=hostname_gen,
@@ -139,17 +138,17 @@ def add_azs():
                 mss_ip=form.mss_ip.data,
                 just_added=True)
 
+            new_azs = AZS.query.filter_by(id=form.sixdign.data).first()
+
             hardware = Hardware(
-                id=form.sixdign.data, 
-                azs_id=form.sixdign.data, 
+                azs_id=new_azs.id, 
                 gate_install=datetime.utcnow(), 
                 router_install=datetime.utcnow(),
                 gate_model=form.gate.data,
                 router_model=form.router.data)
 
             status = Status(
-                id=form.sixdign.data, 
-                azs_id=form.sixdign.data, 
+                azs_id=new_azs.id, 
                 added=datetime.utcnow())
             if form.active.data is True:
                 status.reason=1
@@ -174,14 +173,14 @@ def add_azs():
 
 
 # @login_required
-@app.route('/ip_azs/<sixdign>', methods=['GET', 'POST'])
-def ip_azs(sixdign):
+@app.route('/ip_azs/<id>', methods=['GET', 'POST'])
+def ip_azs(id):
     print(request.form)
-    azs = AZS.query.filter_by(id=sixdign).first_or_404()
-    subnets = Ip.query.filter_by(azs=sixdign).all()
+    azs = AZS.query.filter_by(id=id).first_or_404()
+    subnets = Ip.query.filter_by(azs_id=id).all()
 
     form = EditIpForm()
-    azs_title = 'АЗС:{}, {} по адресу {}'.format(sixdign, azs.hostname, azs.address)
+    azs_title = 'АЗС:{}, {} по адресу {}'.format(azs.sixdign, azs.hostname, azs.address)
 
     # data = request.form['32']
     print('>>> REQUEST')
@@ -197,18 +196,18 @@ def ip_azs(sixdign):
 
 # @login_required
 # @app.route('/change_azs')
-@app.route('/change_azs/<sixdign>', methods=['GET', 'POST'])
-def change_azs(sixdign):
-    azs = AZS.query.filter_by(id=int(sixdign)).first_or_404()
-    hardware = Hardware.query.filter_by(id=int(sixdign)).first_or_404()
-    status = Status.query.filter_by(id=int(sixdign)).first_or_404()
+@app.route('/change_azs/<id>', methods=['GET', 'POST'])
+def change_azs(id):
+    azs = AZS.query.filter_by(id=id).first_or_404()
+    hardware = Hardware.query.filter_by(azs_id=id).first_or_404()
+    status = Status.query.filter_by(azs_id=id).first_or_404()
 
     if request.method == 'GET':
         form = ChangeAzsForm(ru=azs.ru, dzo=azs.dzo, azs_type=azs.azs_type, 
             active=azs.active, router_model=hardware.id, gate_model=hardware.id, 
             region_mgmt=azs.region_mgmt)
 
-        form.sixdign.data = sixdign
+        form.sixdign.data = azs.sixdign
         form.ru.choices = [(ru.id, ru.name) for ru in RU.query.all()]
         form.dzo.choices = [(dzo.id, dzo.name) for dzo in DZO.query.all()]
         form.azs_type.choices = [(azstype.id, azstype.azstype) for azstype in AZS_Type.query.all()]
@@ -243,9 +242,9 @@ def change_azs(sixdign):
         print('>>> BEFORE VALIDATE')
         if form.validate_on_submit():
             print('>>> AFTER VALIDATE')        
-            hardware = Hardware.query.filter_by(id=int(sixdign))
-            azs = AZS.query.filter_by(id=int(sixdign))
-            status = Status.query.filter_by(id=int(sixdign))
+            hardware = Hardware.query.filter_by(azs_id=id)
+            azs = AZS.query.filter_by(id=id)
+            status = Status.query.filter_by(azs_id=id)
 
             azs.update({
                 'num': form.num.data, 

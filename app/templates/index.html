@@ -8,12 +8,12 @@
     </tr>
     {% for azs in azses %}
         <tr valign="top">
-          <td><a href="{{ url_for('change_azs', sixdign=azs.sixdign) }}">{{ azs.sixdign }}</a></td>
+          <td><a href="{{ url_for('change_azs', id=azs.id) }}">{{ azs.sixdign }}</a></td>
           <td>{{ azs.RU.name }}</td>
           <td>{{ azs.num }}</td>
           <td>{{ azs.hostname }}</td>
           <td>{{ azs.address }}</td>
-          <td><a href="{{ url_for('ip_azs', sixdign=azs.sixdign) }}">{{ azs.mss_ip }}</a></td>
+          <td><a href="{{ url_for('ip_azs', id=azs.id) }}">{{ azs.mss_ip }}</a></td>
           <td>{{ azs.data_added }}</td>
           <td>{{ azs.active }}</td>
         </tr>
