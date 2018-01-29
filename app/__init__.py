@@ -85,6 +85,6 @@ def check_just_added():
         print('>>> Scheduler: nothing new!')
         
 # шедулер
-scheduler = APScheduler()
-scheduler.init_app(app)
-scheduler.start()
+# scheduler = APScheduler()
+# scheduler.init_app(app)
+# scheduler.start()

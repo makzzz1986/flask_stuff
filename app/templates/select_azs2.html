@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="/select_azs2" method="post">
+        <button type="submit">Отправить</button>
+
+        {% for ru in rus %}
+            <h2>{{ ru.name }}</h2>
+            <table border=1 width=100%>
+            {% for azs in azses if azs.ru == ru.id %}
+                    <tr valign="top">
+                        <td><input type="checkbox" name="{{ azs.sixdign }}">{{ azs.sixdign }}</td>
+                    </tr>
+            {% endfor %}
+            </table>
+            <br>
+        {% endfor%}
+    </form>
+{% endblock %}

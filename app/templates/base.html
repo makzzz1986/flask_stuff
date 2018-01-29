@@ -9,13 +9,15 @@
   <body>
     <div>
       UZI: 
-      <a href="{{ url_for('index') }}">Home</a>
-      <a href="{{ url_for('add_azs') }}">Add AZS</a>
+      <a href="{{ url_for('index') }}">Все АЗС</a>
+      <a href="{{ url_for('add_azs') }}">Добавить АЗС</a>
+      <a href="{{ url_for('select_azs') }}">Выбор АЗС</a>
+      <a href="{{ url_for('select_azs2') }}">Выбор АЗС2</a>
       {% if current_user.is_anonymous %}
-        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('login') }}">Вход</a>
       {% else %}
-        <a href="{{ url_for('user', username=current_user.username) }}">Profile</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{ url_for('user', username=current_user.username) }}">Профиль</a>
+        <a href="{{ url_for('logout') }}">Выход</a>
       {% endif %}
     </div>
     <hr>

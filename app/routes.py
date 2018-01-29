@@ -20,7 +20,58 @@ def before_request():
 # @login_required
 def index():
     azses = AZS.query.join(RU, AZS.ru==RU.id)
-    return render_template('index.html', title='Home', azses=azses)
+    return render_template('index.html', title='Все АЗС', azses=azses)
+
+@app.route('/select_azs2', methods=['GET', 'POST'])
+# @login_required
+def select_azs2():
+    # azses = AZS.query.join(RU, AZS.ru==RU.id)
+    azses = AZS.query.all()
+    rus = RU.query.all()
+
+    pageType = 'Controller'
+
+    print('>>> PAGE RELOADED')
+    if request.method == 'POST':
+        print('>>> POST')
+        print(request.form)
+        print(dir(request.form))
+        s = ''
+        for select in request.form:
+            print(select)
+            s += select + ' '
+
+        # if request.form['lamp'] == 'on':
+        return render_template('select_azs2.html', title='Выбраны: '+s, rus=rus, azses=azses, pageType=pageType)
+    elif request.method == 'GET':
+        print('>>> method GET')
+        return render_template('select_azs2.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType)
+
+@app.route('/select_azs', methods=['GET', 'POST'])
+# @login_required
+def select_azs():
+    # azses = AZS.query.join(RU, AZS.ru==RU.id)
+    azses = AZS.query.all()
+    rus = RU.query.all()
+
+    pageType = 'Controller'
+    btn1 = True
+
+    print('>>> PAGE RELOADED')
+    if request.method == 'POST':
+        print('>>> POST')
+        if request.form['lamp'] == 'on':
+            print('>>> it is ON')
+            btn1 = False
+            return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType, btn1=btn1)
+        elif request.form['lamp'] == 'off':
+            print('>>> it is OFF')
+            btn1 = True
+            return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType, btn1=btn1)
+
+    elif request.method == 'GET':
+        print('>>> method GET')
+        return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType, btn1=btn1)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -37,7 +88,7 @@ def login():
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)
-    return render_template('login.html', title='Sign In', form=form)
+    return render_template('login.html', title='Вход', form=form)
 
 @app.route('/logout')
 def logout():
@@ -233,7 +284,7 @@ def register():
         db.session.commit()
         flash('Congratulations, you are now registered!')
         return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+    return render_template('register.html', title='Регистрация', form=form)
 
 @app.route('/user/<username>')
 @login_required
@@ -258,5 +309,5 @@ def edit_profile():
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me
-    return render_template('edit_profile.html', title='Edit Profile', form=form)
+    return render_template('edit_profile.html', title='Редактирование профиля', form=form)
 
