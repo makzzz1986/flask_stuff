@@ -21,7 +21,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class ChangeAzsForm(FlaskForm):
-    sixdign = IntegerField()
+    sixdign = StringField()
     ru = SelectField('', coerce=int, option_widget=None)
     num = IntegerField('', validators=[DataRequired(), NumberRange(min=1, max=999)])
     hostname = StringField('', validators=[DataRequired()])

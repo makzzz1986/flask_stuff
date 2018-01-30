@@ -22,30 +22,104 @@ def index():
     azses = AZS.query.join(RU, AZS.ru==RU.id)
     return render_template('index.html', title='Все АЗС', azses=azses)
 
-@app.route('/select_azs2', methods=['GET', 'POST'])
+@app.route('/select_ints', methods=['POST'])
 # @login_required
-def select_azs2():
-    # azses = AZS.query.join(RU, AZS.ru==RU.id)
+def select_ints():
     azses = AZS.query.all()
     rus = RU.query.all()
+    # ips = Ip.query.all()
 
     pageType = 'Controller'
 
-    print('>>> PAGE RELOADED')
+    # выбор интерфейсов из списка азс 
+    # select ip.interface from ip join azs on azs.id=ip.azs_id where azs.id in (3,4,5,6,7);
+
+    # выбор уникальных из определённого региона   
+    # select distinct ip.interface from ip join azs on azs.id=ip.azs_id where azs.ru=3;
+
+    # print(dir(request))
+    print('>>> откуда пришёл?', request.referrer)
+    chose = [] # сюда будем складывать ид АЗСок, что нам передали
+    ints_ru_chosen = {} # сюда будем складывать выбранные для РУ интерфейсы
+    ints_azs_chosen = {} # сюда будем складывать выбранные для АЗС интерфейсы
+    # print('>>> Ints loaded')
     if request.method == 'POST':
         print('>>> POST')
-        print(request.form)
-        print(dir(request.form))
-        s = ''
-        for select in request.form:
-            print(select)
-            s += select + ' '
+        for selected in request.form:
+            print(selected)
+            if '-' in selected:
+                ru, eth = selected.split('-')
+                ints_ru_chosen[int(ru)] = eth # здесь выбранные интерфейсы для РУ вида {'1': 'eth0.12'}
+            elif '=' in selected:   # здесь выбранные интерфейсы для АЗС вида {'1': 'eth0.12'}
+                azs, eth = selected.split('=')
+                if azs in ints_azs_chosen:
+                    ints_azs_chosen[int(azs)].append(eth) # если уже есть интерфейсы для этой азс - добавим новый
+                else:    
+                    ints_azs_chosen[int(azs)] = [eth] # если нет - создадим список из одного
+            else:
+                chose.append(selected) # теперь chose содержит список АЗС.id вида [1,2,5,12]
 
-        # if request.form['lamp'] == 'on':
-        return render_template('select_azs2.html', title='Выбраны: '+s, rus=rus, azses=azses, pageType=pageType)
-    elif request.method == 'GET':
-        print('>>> method GET')
-        return render_template('select_azs2.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType)
+        print(ints_azs_chosen)
+        print(ints_ru_chosen)
+        # print(chose)
+        
+        ints_from_chose = []
+        join = db.join(Ip, AZS, AZS.id==Ip.azs_id)
+        select_ints = db.select([Ip.interface, Ip.azs_id, AZS.ru]).select_from(join).where(AZS.id.in_(chose))
+        for elem in db.session.execute(select_ints):
+            temp_list = [x for x in elem]
+            if ((temp_list[2] in ints_ru_chosen) and (ints_ru_chosen[temp_list[2]] == temp_list[0])) or ((temp_list[1] in ints_azs_chosen) and (temp_list[0] in ints_azs_chosen[temp_list[1]])): # выбран такой интерфейс для региона
+                temp_list.append(True) # нашли интерфейс в помеченных
+                print('>>> FIND CHOSEN!')
+            else:
+                # if (temp_list[2] in ints_azs_chosen) and (ints_azs_chosen[temp_list[2]] == temp_list[0]):
+                temp_list.append(False)
+            ints_from_chose.append(temp_list)
+        ints_from_chose.sort()
+        # print(ints_from_chose)
+        # интерфейсы выбранных азс вида 
+        # [['eth0.5', 48, 2, False], ['eth0.2', 48, 2, False], ['eth0.12', 48, 2, False], 
+        # ['eth0.1', 48, 2, False], ['eth0.7', 48, 2, False], ['eth0.6', 48, 2, False], 
+        # ['eth0.3', 48, 2, False], ['eth0.5', 69, 1, True], ['eth0.11', 69, 1, False]
+
+        azses_from_chose = []
+        select_azses = db.select([AZS.id, AZS.sixdign, AZS.ru]).where(AZS.id.in_(chose)) 
+        # azses_from_chose = [x for x in db.session.execute(select_azses)]
+        for elem in db.session.execute(select_azses):
+            temp_list = [x for x in elem]
+            # if (temp_list[2] in ints_ru_chosen) and ():
+            temp_list.append(False)
+            azses_from_chose.append(temp_list)
+        # здесь теперь расширенный список АЗС, в нём теперь есть ид, код, РУ, отметка выбранного 
+        # [[37, '766325', 2, False], [67, '793805', 1, False], [166, '068101', 1, False], [191, '481729', 1, False]]
+        # print(azses_from_chose)
+
+        join = db.join(RU, AZS, AZS.ru==RU.id)
+        select_uniq_ru =  db.select([AZS.ru, RU.name]).select_from(join).where(AZS.id.in_(chose)).distinct() 
+        ru_from_chose = [x for x in db.session.execute(select_uniq_ru)]
+        # уникальные РУ вида [(7, 'OMS'), (2, 'MSK'), (4, 'KRD')]
+        # for elem in db.session.execute(select_uniq_ru):
+        #     temp_list = [x for x in elem]
+        #     temp_list.append(False)
+        #     azses_from_chose.append(temp_list)
+
+        uniq_ints_from_ru = {}
+        for ru in ru_from_chose:
+            l = list(set([x[0] for x in ints_from_chose if x[2]==ru[0]]))
+            l.sort()
+            uniq_ints_from_ru[ru[0]] = l
+        # теперь тут есть для каждого РУ свой набор интерфейсов, которые есть в выбранных азс, вида:
+        # {1: ['eth0.1', 'eth0.8', 'eth0.10', 'eth0.6', 'eth0.10', 'eth0.6', 'eth0.4', 'eth0.2', 'eth0.5', 
+        # 'eth0.12', 'eth0.3', 'eth0.2', 'eth0.8', 'eth0.9'], 2: ['eth0.11', 'eth0.2', 'eth0.12', 'eth0.7', 
+        # 'eth0.3', 'eth0.3', 'eth0.12']}
+
+        # print(ints_from_chose)
+        # print(ru_from_chose)
+        # print(uniq_ints_from_ru)
+
+        # return render_template('select_ints.html', title='Выберите интерфейсы', chose=chose, rus=rus, azses=azses, pageType=pageType)
+        return render_template('select_ints.html', title='Выберите интерфейсы', pageType=pageType, rus=ru_from_chose, ints=ints_from_chose, azses=azses_from_chose, ru_ints=uniq_ints_from_ru)
+
 
 @app.route('/select_azs', methods=['GET', 'POST'])
 # @login_required
@@ -55,23 +129,24 @@ def select_azs():
     rus = RU.query.all()
 
     pageType = 'Controller'
-    btn1 = True
 
-    print('>>> PAGE RELOADED')
-    if request.method == 'POST':
-        print('>>> POST')
-        if request.form['lamp'] == 'on':
-            print('>>> it is ON')
-            btn1 = False
-            return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType, btn1=btn1)
-        elif request.form['lamp'] == 'off':
-            print('>>> it is OFF')
-            btn1 = True
-            return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType, btn1=btn1)
+    # # print('>>> PAGE RELOADED')
+    # if request.method == 'POST':
+    #     print('>>> POST')
+    #     # print(request.form)
+    #     # print(dir(request.form))
+    #     s = ''
+    #     for select in request.form:
+    #         print(select)
+    #         s += select + ' '
 
-    elif request.method == 'GET':
+        # if request.form['lamp'] == 'on':
+        # return render_template('select_ints.html', title='Выбраны: '+s, rus=rus, azses=azses, pageType=pageType)
+    if request.method == 'GET':
         print('>>> method GET')
-        return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType, btn1=btn1)
+        return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType)
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -108,10 +183,10 @@ def add_azs():
 
     print('>>>', form.is_submitted())
     if form.validate_on_submit():
-        check = AZS.query.filter_by(id=form.sixdign.data).first()
+        check = AZS.query.filter_by(sixdign='%06d' % form.sixdign.data).first()
         # регистрируем под шестизнаком если нет такого id уже
         if check is None:
-            reg_num = str(form.sixdign.data)[:3]
+            reg_num = ('%06d' % form.sixdign.data)[:3]
             ru_name = RU.query.filter_by(id=form.ru.data).first()
             hostname_gen = 'AZS-{}-{}-CSP-{}'.format(ru_name.name, reg_num, str(form.num.data))
 
@@ -124,7 +199,7 @@ def add_azs():
                     region_mgmt_chosen = one_region.id
 
             azs = AZS(
-                sixdign=form.sixdign.data,
+                sixdign='%06d' % form.sixdign.data,
                 num=form.num.data,
                 hostname=hostname_gen,
                 active=form.active.data,
@@ -158,7 +233,7 @@ def add_azs():
                 status.active=False
         else:
             # print('>>> ELSE')
-            flash('Код ({}) уже существует! '.format(str(form.sixdign.data)))
+            flash('Код ({}) уже существует! '.format('%06d' % form.sixdign.data))
             return redirect(url_for('add_azs'))            
 
         db.session.add(azs)

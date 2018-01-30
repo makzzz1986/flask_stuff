@@ -57,7 +57,7 @@ class Rank(db.Model):
 class AZS(db.Model):
     __tablename__ = 'azs'
     id = db.Column(db.Integer, primary_key=True)
-    sixdign = db.Column(db.Integer, index=True, unique=True)
+    sixdign = db.Column(db.String(6), index=True, unique=True)
     ru = db.Column(db.Integer, db.ForeignKey('ru.id'))
     region_mgmt = db.Column(db.Integer, db.ForeignKey('region_mgmt.id'))
     num = db.Column(db.Integer, unique=False)
