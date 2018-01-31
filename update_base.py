@@ -128,7 +128,7 @@ for i in range(300):
     for y in range(7):
         eth = 'eth0.'+str(randint(1,12))
         net = '10.{}.{}.{}/30'.format(randint(1,50), randint(1,254), randint(1,254))
-        ip = Ip(interface=eth, net=net, azs_id=i+1)
+        ip = Ip(interface=eth, net=net, azs_id=i+1, description='пояснения')
         db.session.add(ip)
 
 db.session.commit()

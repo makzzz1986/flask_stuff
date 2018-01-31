@@ -2,21 +2,23 @@
 
 {% block content %}
     <form action="/select_ints" method="post">
-        <button type="submit">Загрузить таблицу</button>
+        <button type="submit" name="download">Загрузить таблицу</button>
+        <br>
         <br>
         {% for ru in rus %}
             <table width="100%">
                 <tr>
-                    <td><h2>{{ ru[1] }}</h2></td>
-                    {% for int in ru_ints[ru[0]] %}
-                        <td><button type="submit" name="{{ ru[0] ~ '-' ~ int }}" >{{ int }}</button></td>
+                    <td><h2>{{ rus[ru] }}</h2></td>
+                    <td><button type="submit" name="{{ ru ~ '-Clear' }}" >Очистить</button>
+                    {% for int in ru_ints[ru] %}
+                        <td><button type="submit" name="{{ ru ~ '-' ~ int }}" >{{ int }}</button></td>
                     {% endfor %}
                 </tr>
             </table>
 
             <table border=1 width="100%">
 
-                {% for azs in azses if azs[2] == ru[0] %}
+                {% for azs in azses if azs[2] == ru %}
                 <tr>
                     <td><input type="checkbox" name="{{ azs[0] }}" checked hidden="True">{{ azs[1] }}</td>
                         {% for int in ints if int[1] == azs[0] %}

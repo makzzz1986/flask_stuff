@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, Response, send_file
 import helpers
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm, ChangeAzsForm, EditIpForm
@@ -7,6 +7,8 @@ from app.models import User, AZS, RU, AZS_Type, DZO, Hardware, Status, Models_ga
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
 from datetime import datetime
+from io import BytesIO
+import xlsxwriter
 
 
 @app.before_request
@@ -21,6 +23,27 @@ def before_request():
 def index():
     azses = AZS.query.join(RU, AZS.ru==RU.id)
     return render_template('index.html', title='Все АЗС', azses=azses)
+
+# @app.route('/download_ip', methods=['POST'])
+# # @login_required
+# def download_ip():
+#     if request.method == 'POST':
+#         ints_azs_chosen = {}
+#         for selected in request.form:
+#             if '=' in selected:   # здесь выбранные интерфейсы для АЗС вида {'1': 'eth0.12'}
+#                 azs, eth = selected.split('=')
+#                 if azs in ints_azs_chosen:
+#                     ints_azs_chosen[azs].append(eth) # если уже есть интерфейсы для этой азс - добавим новый
+#                 else:    
+#                     ints_azs_chosen[azs] = [eth] # если нет - создадим список из одного
+#         print(ints_azs_chosen)
+
+#         join = db.join(Ip, AZS, AZS.id==Ip.azs_id)
+#         select_ints = db.select([Ip.azs_id, Ip.interface, Ip.net]).select_from(join).where(AZS.id.in_(ints_azs_chosen.keys()))
+#         for elem in db.session.execute(select_ints):
+#             print(elem)
+
+#         return render_template('download_ip.html', title='Загрузка')
 
 @app.route('/select_ints', methods=['POST'])
 # @login_required
@@ -38,29 +61,37 @@ def select_ints():
     # select distinct ip.interface from ip join azs on azs.id=ip.azs_id where azs.ru=3;
 
     # print(dir(request))
-    print('>>> откуда пришёл?', request.referrer)
+    # print('>>> откуда пришёл?', request.referrer)
     chose = [] # сюда будем складывать ид АЗСок, что нам передали
     ints_ru_chosen = {} # сюда будем складывать выбранные для РУ интерфейсы
     ints_azs_chosen = {} # сюда будем складывать выбранные для АЗС интерфейсы
+    ints_ru_clear = [] # здесь будет список для очистки
+    download = False # этот флаг показывает, что пользователь хочет скачать xls
     # print('>>> Ints loaded')
     if request.method == 'POST':
         print('>>> POST')
         for selected in request.form:
-            print(selected)
-            if '-' in selected:
+            # print(selected)
+            if selected == 'download':
+                download = True
+            elif '-' in selected:
                 ru, eth = selected.split('-')
-                ints_ru_chosen[int(ru)] = eth # здесь выбранные интерфейсы для РУ вида {'1': 'eth0.12'}
+                if eth == 'Clear': # нажата кнопка очистки
+                    ints_ru_clear.append(ru)
+                else:
+                    ints_ru_chosen[ru] = eth # здесь выбранные интерфейсы для РУ вида {'1': 'eth0.12'}
             elif '=' in selected:   # здесь выбранные интерфейсы для АЗС вида {'1': 'eth0.12'}
                 azs, eth = selected.split('=')
+                # print(ints_azs_chosen)
                 if azs in ints_azs_chosen:
-                    ints_azs_chosen[int(azs)].append(eth) # если уже есть интерфейсы для этой азс - добавим новый
+                    ints_azs_chosen[azs].append(eth) # если уже есть интерфейсы для этой азс - добавим новый
                 else:    
-                    ints_azs_chosen[int(azs)] = [eth] # если нет - создадим список из одного
+                    ints_azs_chosen[azs] = [eth] # если нет - создадим список из одного
             else:
                 chose.append(selected) # теперь chose содержит список АЗС.id вида [1,2,5,12]
 
-        print(ints_azs_chosen)
-        print(ints_ru_chosen)
+        # print(ints_azs_chosen)
+        # print(ints_ru_chosen)
         # print(chose)
         
         ints_from_chose = []
@@ -68,9 +99,11 @@ def select_ints():
         select_ints = db.select([Ip.interface, Ip.azs_id, AZS.ru]).select_from(join).where(AZS.id.in_(chose))
         for elem in db.session.execute(select_ints):
             temp_list = [x for x in elem]
-            if ((temp_list[2] in ints_ru_chosen) and (ints_ru_chosen[temp_list[2]] == temp_list[0])) or ((temp_list[1] in ints_azs_chosen) and (temp_list[0] in ints_azs_chosen[temp_list[1]])): # выбран такой интерфейс для региона
+            if (str(temp_list[2]) not in ints_ru_clear) and \
+            ((str(temp_list[2]) in ints_ru_chosen) and (ints_ru_chosen[str(temp_list[2])] == str(temp_list[0])) or \
+            ((str(temp_list[1]) in ints_azs_chosen) and (str(temp_list[0]) in ints_azs_chosen[str(temp_list[1])]))): # выбран такой интерфейс для региона
                 temp_list.append(True) # нашли интерфейс в помеченных
-                print('>>> FIND CHOSEN!')
+                # print('>>> FIND CHOSEN!')
             else:
                 # if (temp_list[2] in ints_azs_chosen) and (ints_azs_chosen[temp_list[2]] == temp_list[0]):
                 temp_list.append(False)
@@ -80,7 +113,7 @@ def select_ints():
         # интерфейсы выбранных азс вида 
         # [['eth0.5', 48, 2, False], ['eth0.2', 48, 2, False], ['eth0.12', 48, 2, False], 
         # ['eth0.1', 48, 2, False], ['eth0.7', 48, 2, False], ['eth0.6', 48, 2, False], 
-        # ['eth0.3', 48, 2, False], ['eth0.5', 69, 1, True], ['eth0.11', 69, 1, False]
+        # ['eth0.3', 48, 2, False], ['eth0.5', 69, 1, True], ['eth0.11', 69, 1, False]]
 
         azses_from_chose = []
         select_azses = db.select([AZS.id, AZS.sixdign, AZS.ru]).where(AZS.id.in_(chose)) 
@@ -94,24 +127,98 @@ def select_ints():
         # [[37, '766325', 2, False], [67, '793805', 1, False], [166, '068101', 1, False], [191, '481729', 1, False]]
         # print(azses_from_chose)
 
+        ru_from_chose = {}
         join = db.join(RU, AZS, AZS.ru==RU.id)
         select_uniq_ru =  db.select([AZS.ru, RU.name]).select_from(join).where(AZS.id.in_(chose)).distinct() 
-        ru_from_chose = [x for x in db.session.execute(select_uniq_ru)]
-        # уникальные РУ вида [(7, 'OMS'), (2, 'MSK'), (4, 'KRD')]
-        # for elem in db.session.execute(select_uniq_ru):
-        #     temp_list = [x for x in elem]
-        #     temp_list.append(False)
-        #     azses_from_chose.append(temp_list)
+        # ru_from_chose = [x for x in db.session.execute(select_uniq_ru)]
+        for elem in db.session.execute(select_uniq_ru):
+            ru_from_chose[elem[0]] = elem[1]
+        # уникальные РУ вида {2: 'MSK', 1: 'SPB'}
+        # print(ru_from_chose)
 
         uniq_ints_from_ru = {}
         for ru in ru_from_chose:
-            l = list(set([x[0] for x in ints_from_chose if x[2]==ru[0]]))
+            l = list(set([x[0] for x in ints_from_chose if x[2]==ru]))
             l.sort()
-            uniq_ints_from_ru[ru[0]] = l
+            uniq_ints_from_ru[ru] = l
+        # print(uniq_ints_from_ru)
         # теперь тут есть для каждого РУ свой набор интерфейсов, которые есть в выбранных азс, вида:
         # {1: ['eth0.1', 'eth0.8', 'eth0.10', 'eth0.6', 'eth0.10', 'eth0.6', 'eth0.4', 'eth0.2', 'eth0.5', 
         # 'eth0.12', 'eth0.3', 'eth0.2', 'eth0.8', 'eth0.9'], 2: ['eth0.11', 'eth0.2', 'eth0.12', 'eth0.7', 
         # 'eth0.3', 'eth0.3', 'eth0.12']}
+
+        # если пользователь нажал скачать!
+        if download is True:
+            to_xls_list = []
+            join = db.join(Ip, AZS, AZS.id==Ip.azs_id)
+            select_nets = db.select([AZS.id, AZS.sixdign, AZS.num, AZS.ru, AZS.address, Ip.interface, Ip.net, Ip.description]).select_from(join).where(AZS.id.in_(ints_azs_chosen.keys()))
+            for elem in db.session.execute(select_nets):
+                azs_id, six, num, ru, addr, eth, net, desc = elem
+                # elem[0], elem[1], helpers.eth_to_vlan
+                for interface in ints_from_chose:
+                    # [['eth0.5', 48, 2, False], ['eth0.2', 48, 2, False], ['eth0.12', 48, 2, False], 
+                    # смотрим в списке отмеченных интерфейсов, если находим наши - помещаем в список
+                    # возможно был способ сделать хитрый запрос SQL, но мне не удалось с ходу, может в будущем
+                    if (azs_id == interface[1]) and \
+                       (eth == interface[0]) and \
+                       (interface[3] is True):
+                        to_xls_list.append(
+                            {'azs_id': azs_id, 
+                            'sixdign': six, 
+                            'num': num, 
+                            'ru': ru_from_chose[ru], 
+                            'addr': addr, 
+                            'int':eth, 
+                            'desc': desc, 
+                            'subnet': net})
+                        continue
+            to_xls_list = sorted(to_xls_list, key=lambda elem: elem['sixdign']) # сортируем по коду
+            print(to_xls_list)
+            # [{'azs_id': 127, 'sixdign': '031871', 'num': 871, 'ru': 'KMR', 'addr': 'DIFFERENT_address-031871', 
+            # 'int': 'eth0.10', 'desc': 'пояснения', 'subnet': '10.7.252.245/30'},
+
+            # создаём буффер, заполняемый экселем
+            output = BytesIO()
+            row_counter = 0
+            interface_cols = {}
+            with xlsxwriter.Workbook(output) as book:
+                sheet = book.add_worksheet('Выборка'+ str(datetime.utcnow()).split()[0])
+                cell_bold = book.add_format({'bold': True})
+                sheet.set_row(0, 30, cell_bold)
+                sheet.write_string(0, 0, '№\nп/п')
+                sheet.set_column(0, 0, 3)
+                sheet.write_string(0, 1, 'Код')
+                sheet.set_column(1, 1, 8)
+                sheet.write_string(0, 2, '№')
+                sheet.set_column(2, 2, 4)
+                sheet.write_string(0, 3, 'Отд.')
+                sheet.set_column(3, 3, 6)
+                sheet.write_string(0, 4, 'Адрес')
+                sheet.set_column(4, 4, 24)
+
+                # заполняем строки с данными АЗС
+                for azs in to_xls_list:
+                    row_counter += 1
+                    net_desc = helpers.eth_to_vlan(azs['int'])+'\n'+azs['desc'] # здесь будет номер влана и подпись
+                    sheet.write_number(row_counter, 0, row_counter) # номер пункта
+                    sheet.write_string(row_counter, 1, azs['sixdign'])      # шестизначный код
+                    sheet.write_number(row_counter, 2, azs['num'])      # номер
+                    sheet.write_string(row_counter, 3, azs['ru'])      # РУ
+                    sheet.write_string(row_counter, 4, azs['addr'])      # адрес
+
+                    if net_desc not in interface_cols.keys(): # если в титуле таблицы нет подсети
+                        interface_cols[net_desc] = len(interface_cols)+5
+                        sheet.write_string(0, interface_cols[net_desc], net_desc)
+                        sheet.set_column(interface_cols[net_desc], interface_cols[net_desc], 16)
+
+                    sheet.write_string(row_counter, interface_cols[net_desc], azs['subnet'])
+
+
+            output.seek(0)
+            return send_file(output, attachment_filename='azs_subnets.xlsx', as_attachment=True)
+
+        # 55, '216977', 'DIFFERENT_address-216977', 'eth0.7', '10.14.249.74/30', None)
+        # (55, '216977', 'DIFFERENT_address-216977', 'eth0.8', '10.3.50.94/30', None)
 
         # print(ints_from_chose)
         # print(ru_from_chose)

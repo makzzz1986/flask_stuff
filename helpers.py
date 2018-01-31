@@ -19,3 +19,6 @@ def get_region_mgmt(ru):
         return 'Тюмень'
     elif ru == 'EKB':
         return 'Екатеринбург'
+
+def eth_to_vlan(string): # переводим сабинтерфейсы во вланы ВНИМАНИЕ! интерфейсы с eth1 не учитываются, только цифры после точки!
+    return 'Vlan ' + string.split('.')[1]
