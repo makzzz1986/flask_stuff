@@ -12,6 +12,7 @@
       <a href="{{ url_for('index') }}">Все АЗС</a>
       <a href="{{ url_for('add_azs') }}">Добавить АЗС</a>
       <a href="{{ url_for('select_azs') }}">Выбор АЗС</a>
+      <a href="{{ url_for('logs') }}">Логи</a>
       {% if current_user.is_anonymous %}
         <a href="{{ url_for('login') }}">Вход</a>
       {% else %}

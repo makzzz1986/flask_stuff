@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+<!-- (datetime.datetime(2018, 2, 1, 7, 12, 44), 'John', 6, '111119', 'Добавил новую АЗС!')] -->
+{% block content %}
+  <h1>История изменений</h1>
+  <table border=1 width=100%>
+    <tr valign="top">
+        <td width="20">Дата</td><td width="20">Пользователь</td><td width="15">АЗС</td><td>Изменения</td>
+    </tr>
+    {% for log in logs %}
+        <tr valign="top">
+            <td>{{ log[0] }}</td>
+            <td><a href="{{ url_for('user', username=log[1]) }}">{{ log[1] }}</a></td>
+            {% if log[3] %}
+            <td><a href="{{ url_for('change_azs', id=log[2]) }}">{{ log[3] }}</a></td>
+            {% else %}
+            <td></td>
+            {% endif %}
+            <td>{{ log[4] }}</td>
+        </tr>
+    {% endfor %}
+  </table>
+{% endblock %}

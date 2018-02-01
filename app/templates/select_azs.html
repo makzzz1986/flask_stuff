@@ -5,10 +5,17 @@
         <button type="submit">Перейти к выбору интерфейсов</button>
         {% for ru in rus %}
             <h2>{{ ru.name }}</h2>
-            <br>
-            {% for azs in azses if azs.ru == ru.id %}
-                <input type="checkbox" name="{{ azs.id }}">{{ azs.sixdign }}
-            {% endfor %}
+                <table cellspacing="10" border="1">
+                    {% for unit in azses if unit == ru.id %}
+                        {% for pack in azses[unit] %}
+                            <tr>
+                            {% for azs in pack %}
+                                <td><input type="checkbox" name="{{ azs[0] }}">{{ azs[1] }}</td>
+                            {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </table>
         {% endfor%}
     </form>
 {% endblock %}

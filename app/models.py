@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     comment = db.relationship('Comment', backref='author', lazy='dynamic')
+    logs = db.relationship('Logs', backref='specialist', lazy='dynamic')
     azs_added = db.relationship('AZS', backref='specialist', lazy='dynamic')
     about_me = db.Column(db.String(140))
     rank = db.Column(db.Integer, db.ForeignKey('rank.id'))
@@ -38,9 +39,21 @@ class Comment(db.Model):
     body = db.Column(db.String(200))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    azs_id = db.Column(db.Integer, db.ForeignKey('azs.id'))
 
     def __repr__(self):
         return '<Comment {}>'.format(self.body)
+
+class Logs(db.Model):
+    __tablename__ = 'logs'
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.String(200))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    azs_id = db.Column(db.Integer, db.ForeignKey('azs.id'))
+
+    def __repr__(self):
+        return '<Log {}>'.format(self.body)
 
 class Divisions(db.Model):
     __tablename__ = 'divisions'
@@ -74,6 +87,11 @@ class AZS(db.Model):
     mss_ip = db.Column(db.String(15))
     ip = db.relationship('Ip', backref='author', lazy='dynamic')
     just_added = db.Column(db.Boolean)
+    comment = db.relationship('Comment', backref='azs', lazy='dynamic')
+    logs = db.relationship('Logs', backref='azs', lazy='dynamic')
+
+    def __repr__(self):
+        return '<AZS {} with sixdign {}>'.format(self.id, self.sixdign)
 
 class Ip(db.Model):
     __tablename__ = 'ip'

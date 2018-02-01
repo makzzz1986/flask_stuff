@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="/select_ints" method="post">
+        <button type="submit">Перейти к выбору интерфейсов</button>
+        {% for ru in rus %}
+            <h2>{{ ru.name }}</h2>
+            <br>
+                    {% for azs in azses if azs.ru == ru.id %}
+                        <input type="checkbox" name="{{ azs.id }}">{{ azs.sixdign }}
+                    {% endfor %}
+            </table>
+        {% endfor%}
+    </form>
+{% endblock %}

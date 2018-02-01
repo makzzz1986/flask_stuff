@@ -4,6 +4,7 @@ import helpers
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, AddAzsForm, ChangeAzsForm, EditIpForm
 from app.models import User, AZS, RU, AZS_Type, DZO, Hardware, Status, Models_gate, Models_router, Region_mgmt, Ip
+from app.models import Logs
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, login_required
 from datetime import datetime
@@ -17,6 +18,7 @@ def before_request():
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
 
+
 @app.route('/')
 @app.route('/index')
 # @login_required
@@ -24,26 +26,6 @@ def index():
     azses = AZS.query.join(RU, AZS.ru==RU.id)
     return render_template('index.html', title='Все АЗС', azses=azses)
 
-# @app.route('/download_ip', methods=['POST'])
-# # @login_required
-# def download_ip():
-#     if request.method == 'POST':
-#         ints_azs_chosen = {}
-#         for selected in request.form:
-#             if '=' in selected:   # здесь выбранные интерфейсы для АЗС вида {'1': 'eth0.12'}
-#                 azs, eth = selected.split('=')
-#                 if azs in ints_azs_chosen:
-#                     ints_azs_chosen[azs].append(eth) # если уже есть интерфейсы для этой азс - добавим новый
-#                 else:    
-#                     ints_azs_chosen[azs] = [eth] # если нет - создадим список из одного
-#         print(ints_azs_chosen)
-
-#         join = db.join(Ip, AZS, AZS.id==Ip.azs_id)
-#         select_ints = db.select([Ip.azs_id, Ip.interface, Ip.net]).select_from(join).where(AZS.id.in_(ints_azs_chosen.keys()))
-#         for elem in db.session.execute(select_ints):
-#             print(elem)
-
-#         return render_template('download_ip.html', title='Загрузка')
 
 @app.route('/select_ints', methods=['POST'])
 # @login_required
@@ -231,28 +213,37 @@ def select_ints():
 @app.route('/select_azs', methods=['GET', 'POST'])
 # @login_required
 def select_azs():
-    # azses = AZS.query.join(RU, AZS.ru==RU.id)
-    azses = AZS.query.all()
+    azses = AZS.query.join(RU, AZS.ru==RU.id)
     rus = RU.query.all()
+
+    azs_in_ru = {} # попробуем по РУ рассортировать АЗСки, формирую пачки по 12 штук, чтобы потом нарисовать таблицы
+    counter = 0
+
+    for azs in azses:
+        # print()
+        # print(azs)
+        if azs.ru in azs_in_ru: 
+            # print('>>> FIND!', azs.ru)
+            for lst in azs_in_ru[azs.ru]:
+                # print(lst) 
+                # print('>>> Go to sublsts')
+                if len(lst) < 12:
+                    # print('>>> append below 12')
+                    lst.append((azs.id, azs.sixdign))
+                    break
+                elif azs_in_ru[azs.ru].index(lst) == (len(azs_in_ru[azs.ru])-1):
+                    # print('>>> create new sublst')
+                    # print(azs_in_ru[azs.ru])
+                    azs_in_ru[azs.ru].append([(azs.id, azs.sixdign)])
+                    break
+        else:
+            azs_in_ru[azs.ru] = [[(azs.id, azs.sixdign)]]
 
     pageType = 'Controller'
 
-    # # print('>>> PAGE RELOADED')
-    # if request.method == 'POST':
-    #     print('>>> POST')
-    #     # print(request.form)
-    #     # print(dir(request.form))
-    #     s = ''
-    #     for select in request.form:
-    #         print(select)
-    #         s += select + ' '
-
-        # if request.form['lamp'] == 'on':
-        # return render_template('select_ints.html', title='Выбраны: '+s, rus=rus, azses=azses, pageType=pageType)
     if request.method == 'GET':
         print('>>> method GET')
-        return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azses, pageType=pageType)
-
+        return render_template('select_azs.html', title='Выбор АЗС', rus=rus, azses=azs_in_ru, pageType=pageType)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -272,10 +263,18 @@ def login():
         return redirect(next_page)
     return render_template('login.html', title='Вход', form=form)
 
+
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+
+@app.route('/logs')
+def logs():
+    query_logs = db.session.query(Logs.timestamp, User.username, AZS.id, AZS.sixdign, Logs.body).filter(Logs.user_id==User.id).filter(Logs.azs_id==AZS.id).all()
+    return render_template('logs.html', logs=query_logs)
+    # [(None, 'John', 1, '111222', 'test'), (datetime.datetime(2018, 2, 1, 7, 12, 44), 'John', 6, '111119', 'Добавил новую АЗС!')]
 
 # @login_required
 @app.route('/add_azs', methods=['GET', 'POST'])
@@ -320,7 +319,9 @@ def add_azs():
                 mss_ip=form.mss_ip.data,
                 just_added=True)
 
-            new_azs = AZS.query.filter_by(id=form.sixdign.data).first()
+            db.session.add(azs)
+            db.session.commit()
+            new_azs = AZS.query.filter_by(sixdign=form.sixdign.data).first()
 
             hardware = Hardware(
                 azs_id=new_azs.id, 
@@ -347,6 +348,10 @@ def add_azs():
         db.session.add(hardware)
         db.session.add(status)
         db.session.commit()
+
+        # получим номер новой АЗС  
+        helpers.add_log(current_user.id, 'Добавил новую АЗС!', new_azs.id)
+        db.session.commit()        
         # flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
         flash('Вы добавили новую АЗС: ' + hostname_gen + '!')
         return redirect(url_for('add_azs'))
@@ -375,6 +380,7 @@ def ip_azs(id):
         if form.validate_on_submit():
             print('>>> AFTER VALIDATE')  
             pass
+
 
 # @login_required
 # @app.route('/change_azs')
@@ -467,6 +473,7 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', title='Регистрация', form=form)
 
+
 @app.route('/user/<username>')
 @login_required
 def user(username):
@@ -476,6 +483,7 @@ def user(username):
         {'author': user, 'body': 'Test post #2'}
     ]
     return render_template('user.html', user=user, posts=posts)
+
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
