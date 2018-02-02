@@ -2,16 +2,16 @@
 
 {% block content %}
     <form action="/select_ints" method="post">
-        <button type="submit" name="download">Загрузить таблицу</button>
+        <button type="submit" name="gen_subnets">Скачать таблицу</button>
         <br>
         <br>
         {% for ru in rus %}
             <table width="100%">
                 <tr>
                     <td><h2>{{ rus[ru] }}</h2></td>
-                    <td><button type="submit" name="{{ ru ~ '-Clear' }}" >Очистить</button>
+                    <td><button type="submit" name="{{ ru ~ '#Clear' }}" >Очистить</button>
                     {% for int in ru_ints[ru] %}
-                        <td><button type="submit" name="{{ ru ~ '-' ~ int }}" >{{ int }}</button></td>
+                        <td><button type="submit" name="{{ ru ~ '#' ~ int }}" >{{ int }}</button></td>
                     {% endfor %}
                 </tr>
             </table>

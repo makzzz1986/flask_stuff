@@ -29,14 +29,17 @@ def eth_to_vlan(string): # переводим сабинтерфейсы во в
     return 'Vlan ' + string.split('.')[1]
 
 # записываем запись в лог
-def add_log(user, body, azs=None):
+# ВАЖНО! коммит делаем не здесь, а после вызова, ибо много коммитов не есть хорошо
+def add_log(user, body, azs_id=None, sixdign=None):
     new_one = Logs(
         timestamp=datetime.utcnow(),
         user_id=user,
         body=body)
     print(new_one)
-    if azs is not None:
-        new_one.azs_id=azs
+    if azs_id is not None:
+        new_one.azs_id=azs_id
+    if sixdign is not None:
+        new_one.sixdign=sixdign
     db.session.add(new_one)
 
     

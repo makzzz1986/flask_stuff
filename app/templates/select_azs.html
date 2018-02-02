@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <form action="/select_ints" method="post">
-        <button type="submit">Перейти к выбору интерфейсов</button>
+    <form method="post">
+        <button type="submit" formaction="/select_ints">Перейти к выбору подсетей</button>
+        <button type="submit" formaction="/get_general">Перейти к выгрузке общих данных</button>
         {% for ru in rus %}
             <h2>{{ ru.name }}</h2>
                 <table cellspacing="10" border="1">

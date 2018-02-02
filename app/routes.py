@@ -26,6 +26,12 @@ def index():
     azses = AZS.query.join(RU, AZS.ru==RU.id)
     return render_template('index.html', title='Все АЗС', azses=azses)
 
+@app.route('/get_general', methods=['POST'])
+# @login_required
+def get_general():
+    pageType = 'Controller'
+    request_result = request.form
+    return render_template('get_general.html', title='Выберите вид отчёта', pageType=pageType, request_result=request_result)
 
 @app.route('/select_ints', methods=['POST'])
 # @login_required
@@ -48,16 +54,16 @@ def select_ints():
     ints_ru_chosen = {} # сюда будем складывать выбранные для РУ интерфейсы
     ints_azs_chosen = {} # сюда будем складывать выбранные для АЗС интерфейсы
     ints_ru_clear = [] # здесь будет список для очистки
-    download = False # этот флаг показывает, что пользователь хочет скачать xls
+    gen_subnets = False # этот флаг показывает, что пользователь хочет скачать xls
     # print('>>> Ints loaded')
     if request.method == 'POST':
         print('>>> POST')
         for selected in request.form:
             # print(selected)
-            if selected == 'download':
-                download = True
-            elif '-' in selected:
-                ru, eth = selected.split('-')
+            if selected == 'gen_subnets':
+                gen_subnets = True
+            elif '#' in selected:
+                ru, eth = selected.split('#')
                 if eth == 'Clear': # нажата кнопка очистки
                     ints_ru_clear.append(ru)
                 else:
@@ -80,6 +86,7 @@ def select_ints():
         join = db.join(Ip, AZS, AZS.id==Ip.azs_id)
         select_ints = db.select([Ip.interface, Ip.azs_id, AZS.ru]).select_from(join).where(AZS.id.in_(chose))
         for elem in db.session.execute(select_ints):
+            # print(elem)
             temp_list = [x for x in elem]
             if (str(temp_list[2]) not in ints_ru_clear) and \
             ((str(temp_list[2]) in ints_ru_chosen) and (ints_ru_chosen[str(temp_list[2])] == str(temp_list[0])) or \
@@ -130,7 +137,7 @@ def select_ints():
         # 'eth0.3', 'eth0.3', 'eth0.12']}
 
         # если пользователь нажал скачать!
-        if download is True:
+        if gen_subnets is True:
             to_xls_list = []
             join = db.join(Ip, AZS, AZS.id==Ip.azs_id)
             select_nets = db.select([AZS.id, AZS.sixdign, AZS.num, AZS.ru, AZS.address, Ip.interface, Ip.net, Ip.description]).select_from(join).where(AZS.id.in_(ints_azs_chosen.keys()))
@@ -155,7 +162,7 @@ def select_ints():
                             'subnet': net})
                         continue
             to_xls_list = sorted(to_xls_list, key=lambda elem: elem['sixdign']) # сортируем по коду
-            print(to_xls_list)
+            # print(to_xls_list)
             # [{'azs_id': 127, 'sixdign': '031871', 'num': 871, 'ru': 'KMR', 'addr': 'DIFFERENT_address-031871', 
             # 'int': 'eth0.10', 'desc': 'пояснения', 'subnet': '10.7.252.245/30'},
 
@@ -171,10 +178,10 @@ def select_ints():
                 sheet.set_column(0, 0, 3)
                 sheet.write_string(0, 1, 'Код')
                 sheet.set_column(1, 1, 8)
-                sheet.write_string(0, 2, '№')
-                sheet.set_column(2, 2, 4)
-                sheet.write_string(0, 3, 'Отд.')
-                sheet.set_column(3, 3, 6)
+                sheet.write_string(0, 2, 'Отд.')
+                sheet.set_column(2, 2, 6)
+                sheet.write_string(0, 3, '№')
+                sheet.set_column(3, 3, 4)
                 sheet.write_string(0, 4, 'Адрес')
                 sheet.set_column(4, 4, 24)
 
@@ -184,8 +191,8 @@ def select_ints():
                     net_desc = helpers.eth_to_vlan(azs['int'])+'\n'+azs['desc'] # здесь будет номер влана и подпись
                     sheet.write_number(row_counter, 0, row_counter) # номер пункта
                     sheet.write_string(row_counter, 1, azs['sixdign'])      # шестизначный код
-                    sheet.write_number(row_counter, 2, azs['num'])      # номер
-                    sheet.write_string(row_counter, 3, azs['ru'])      # РУ
+                    sheet.write_string(row_counter, 2, azs['ru'])      # РУ
+                    sheet.write_number(row_counter, 3, azs['num'])      # номер
                     sheet.write_string(row_counter, 4, azs['addr'])      # адрес
 
                     if net_desc not in interface_cols.keys(): # если в титуле таблицы нет подсети
@@ -197,6 +204,8 @@ def select_ints():
 
 
             output.seek(0)
+            helpers.add_log(current_user.id, 'Скачал отчёт с количеством АЗС в {} шт.'.format(str(row_counter)))
+            db.session.commit()
             return send_file(output, attachment_filename='azs_subnets.xlsx', as_attachment=True)
 
         # 55, '216977', 'DIFFERENT_address-216977', 'eth0.7', '10.14.249.74/30', None)
@@ -216,24 +225,17 @@ def select_azs():
     azses = AZS.query.join(RU, AZS.ru==RU.id)
     rus = RU.query.all()
 
-    azs_in_ru = {} # попробуем по РУ рассортировать АЗСки, формирую пачки по 12 штук, чтобы потом нарисовать таблицы
+    # попробуем по РУ рассортировать АЗСки, формирую пачки по 12 штук, чтобы потом нарисовать таблицы
+    azs_in_ru = {} 
     counter = 0
 
     for azs in azses:
-        # print()
-        # print(azs)
         if azs.ru in azs_in_ru: 
-            # print('>>> FIND!', azs.ru)
             for lst in azs_in_ru[azs.ru]:
-                # print(lst) 
-                # print('>>> Go to sublsts')
                 if len(lst) < 12:
-                    # print('>>> append below 12')
                     lst.append((azs.id, azs.sixdign))
                     break
                 elif azs_in_ru[azs.ru].index(lst) == (len(azs_in_ru[azs.ru])-1):
-                    # print('>>> create new sublst')
-                    # print(azs_in_ru[azs.ru])
                     azs_in_ru[azs.ru].append([(azs.id, azs.sixdign)])
                     break
         else:
@@ -272,7 +274,8 @@ def logout():
 
 @app.route('/logs')
 def logs():
-    query_logs = db.session.query(Logs.timestamp, User.username, AZS.id, AZS.sixdign, Logs.body).filter(Logs.user_id==User.id).filter(Logs.azs_id==AZS.id).all()
+    query_logs = db.session.query(Logs.timestamp, User.username, Logs.body, Logs.azs_id, Logs.sixdign).filter(Logs.user_id==User.id).all()
+    print(query_logs)
     return render_template('logs.html', logs=query_logs)
     # [(None, 'John', 1, '111222', 'test'), (datetime.datetime(2018, 2, 1, 7, 12, 44), 'John', 6, '111119', 'Добавил новую АЗС!')]
 
@@ -317,7 +320,7 @@ def add_azs():
                 dzo=form.dzo.data,
                 azs_type=form.azs_type.data,
                 mss_ip=form.mss_ip.data,
-                just_added=True)
+                need_to_check=True)
 
             db.session.add(azs)
             db.session.commit()
@@ -350,8 +353,8 @@ def add_azs():
         db.session.commit()
 
         # получим номер новой АЗС  
-        helpers.add_log(current_user.id, 'Добавил новую АЗС!', new_azs.id)
-        db.session.commit()        
+        helpers.add_log(current_user.id, 'Добавил новую АЗС!', new_azs.id, new_azs.sixdign)
+        db.session.commit()
         # flash('Congratulations, you add a new AZS - ' + str(form.sixdign.data))
         flash('Вы добавили новую АЗС: ' + hostname_gen + '!')
         return redirect(url_for('add_azs'))

@@ -51,6 +51,7 @@ class Logs(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     azs_id = db.Column(db.Integer, db.ForeignKey('azs.id'))
+    sixdign = db.Column(db.String(6))
 
     def __repr__(self):
         return '<Log {}>'.format(self.body)
@@ -86,7 +87,7 @@ class AZS(db.Model):
     hardware = db.relationship('Hardware', uselist=False, back_populates='azs')
     mss_ip = db.Column(db.String(15))
     ip = db.relationship('Ip', backref='author', lazy='dynamic')
-    just_added = db.Column(db.Boolean)
+    need_to_check = db.Column(db.Boolean)
     comment = db.relationship('Comment', backref='azs', lazy='dynamic')
     logs = db.relationship('Logs', backref='azs', lazy='dynamic')
 

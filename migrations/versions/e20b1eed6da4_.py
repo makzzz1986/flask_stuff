@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 47737234ffda
+Revision ID: e20b1eed6da4
 Revises: 
-Create Date: 2018-02-01 09:12:27.519818
+Create Date: 2018-02-02 11:07:22.452171
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '47737234ffda'
+revision = 'e20b1eed6da4'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -102,7 +102,7 @@ def upgrade():
     sa.Column('user_added', sa.Integer(), nullable=True),
     sa.Column('address', sa.String(length=120), nullable=True),
     sa.Column('mss_ip', sa.String(length=15), nullable=True),
-    sa.Column('just_added', sa.Boolean(), nullable=True),
+    sa.Column('need_to_check', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['azs_type'], ['azs_type.id'], ),
     sa.ForeignKeyConstraint(['dzo'], ['dzo.id'], ),
     sa.ForeignKeyConstraint(['region_mgmt'], ['region_mgmt.id'], ),
@@ -156,6 +156,7 @@ def upgrade():
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('azs_id', sa.Integer(), nullable=True),
+    sa.Column('sixdign', sa.String(length=6), nullable=True),
     sa.ForeignKeyConstraint(['azs_id'], ['azs.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')

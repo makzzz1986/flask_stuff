@@ -11,11 +11,11 @@
             <td>{{ log[0] }}</td>
             <td><a href="{{ url_for('user', username=log[1]) }}">{{ log[1] }}</a></td>
             {% if log[3] %}
-            <td><a href="{{ url_for('change_azs', id=log[2]) }}">{{ log[3] }}</a></td>
+            <td><a href="{{ url_for('change_azs', id=log[3]) }}">{{ log[4] }}</a></td>
             {% else %}
             <td></td>
             {% endif %}
-            <td>{{ log[4] }}</td>
+            <td>{{ log[2] }}</td>
         </tr>
     {% endfor %}
   </table>
