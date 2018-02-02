@@ -107,20 +107,27 @@ class Hardware(db.Model):
     __tablename__ = 'hardware'
     id = db.Column(db.Integer, primary_key=True)
     gate_model = db.Column(db.Integer, db.ForeignKey('models_gate.id'))
-    # gate_vers = db.Column(db.String(10))
     gate_serial = db.Column(db.String(10), unique=True)
     gate_lic = db.Column(db.String(10))
     # gate_owner = db.Column(db.Integer, db.ForeignKey('dzo.id'))
     gate_install = db.Column(db.DateTime, default=datetime.utcnow)
     router_model = db.Column(db.Integer, db.ForeignKey('models_router.id'))
-    # router_model = db.Column(db.String(10))
     router_serial = db.Column(db.String(10), unique=True)
-    # router_lic = db.Column(db.String(10))
     # router_owner = db.Column(db.Integer, db.ForeignKey('dzo.id'))
     router_install = db.Column(db.DateTime, default=datetime.utcnow)
     # zip_addr = db.Column(db.Integer, db.ForeignKey('zip_addr.id'))
     azs_id = db.Column(db.Integer, db.ForeignKey('azs.id'), nullable=False)
     azs = db.relationship('AZS', back_populates='hardware')
+
+class DZO(db.Model):
+    __tablename__ = 'dzo'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30))
+    service = db.Column(db.String(60))
+    manager = db.Column(db.String(60))
+    azs = db.relationship('AZS', backref='DZO', lazy='dynamic')
+    # gate_owner = db.relationship('Hardware', backref='gates', lazy='dynamic')
+    # router_owner = db.relationship('Hardware', backref='routers', lazy='dynamic')
 
 class Models_gate(db.Model):
     __tablename__ = 'models_gate'
@@ -146,14 +153,6 @@ class Region_mgmt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
     azs = db.relationship('AZS', backref='Region', lazy='dynamic')
-
-class DZO(db.Model):
-    __tablename__ = 'dzo'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(30))
-    service = db.Column(db.String(60))
-    manager = db.Column(db.String(60))
-    azs = db.relationship('AZS', backref='DZO', lazy='dynamic')
 
 class AZS_Type(db.Model):
     __tablename__ = 'azs_type'

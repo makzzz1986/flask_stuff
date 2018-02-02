@@ -59,6 +59,8 @@ dzo = DZO(name='Главный заказчик', service='Договор от 3
 db.session.add(dzo)
 dzo = DZO(name='Побочный подрядчик', service='Договор не заключён', manager='Иванов')
 db.session.add(dzo)
+dzo = DZO(name='Мы сами', service='Договор не требуется', manager='Сидоров')
+db.session.add(dzo)
 
 db.session.commit()
 

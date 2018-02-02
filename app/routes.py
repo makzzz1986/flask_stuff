@@ -275,7 +275,7 @@ def logout():
 @app.route('/logs')
 def logs():
     query_logs = db.session.query(Logs.timestamp, User.username, Logs.body, Logs.azs_id, Logs.sixdign).filter(Logs.user_id==User.id).all()
-    print(query_logs)
+    # print(query_logs)
     return render_template('logs.html', logs=query_logs)
     # [(None, 'John', 1, '111222', 'test'), (datetime.datetime(2018, 2, 1, 7, 12, 44), 'John', 6, '111119', 'Добавил новую АЗС!')]
 
